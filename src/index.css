@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #050508;
+  color: #e9e6f9;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Refined Liquid Glass Style */
+.glass-panel {
+  background: rgba(20, 6, 30, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(160, 100, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(30, 10, 40, 0.65);
+  border-color: rgba(160, 100, 255, 0.3);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+.liquid-blob {
+  position: absolute;
+  filter: blur(90px);
+  opacity: 0.45;
+  z-index: -1;
+  animation: float 10s ease-in-out infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+/* Confetti Animation Helpers */
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #f0f;
+  top: -10%;
+  opacity: 0;
+}
