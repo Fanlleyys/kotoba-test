@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCards } from '../utils/storage';
 import { Card } from '../types';
-import { Play, TrendingUp, List, Clock, Brain, PlusCircle, Layers } from 'lucide-react';
+import { Play, TrendingUp, Clock, Brain, PlusCircle, Layers } from 'lucide-react';
 import { StatsChart } from '../components/StatsChart';
 
 export const Dashboard: React.FC = () => {

@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   getDecks, getCards, createDeck, updateDeck, deleteDeck, restoreDeck, 
   addCards, exportDeckToJSON 
 } from '../utils/storage';
-import { Deck, Card, DeckExport } from '../types';
+import { Deck, Card } from '../types';
 import { 
   Search, Plus, MoreVertical, Play, Edit2, Trash2, Download, 
-  Upload, X, Layers, Tag, RotateCcw 
+  Upload, X, Layers, RotateCcw 
 } from 'lucide-react';
 
 export const Decks: React.FC = () => {

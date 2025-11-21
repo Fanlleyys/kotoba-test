@@ -1,11 +1,8 @@
-
-import { Card, Deck, ReviewMeta, DeckExport } from '../types';
+import { Card, Deck, DeckExport } from '../types';
 import { getInitialReviewMeta } from './sm2';
 
 const CARD_STORAGE_KEY = 'katasensei_cards_v1';
 const DECK_STORAGE_KEY = 'katasensei_decks_v1';
-
-const DEFAULT_DECK_ID = 'deck-makanan';
 
 // Seed data matching the prompt requirements
 const SEED_DECKS: Deck[] = [
