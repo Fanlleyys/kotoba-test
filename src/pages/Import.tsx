@@ -90,7 +90,7 @@ export const Import: React.FC = () => {
            </div>
         </div>
 
-        <p className="mb-4 text-gray-400">Paste your JSON array below. Fields <code>id</code>, <code>romaji</code>, etc are optional (ID will be auto-generated if missing).</p>
+        <p className="mb-4 text-gray-400">Paste your JSON array below. <strong>Avoid using "id" field</strong> if you want to auto-generate unique cards.</p>
         
         <div className="bg-black/30 rounded-xl border border-white/10 p-4 mb-6 font-mono text-xs text-gray-500 overflow-x-auto">
           <pre>{`[
@@ -99,7 +99,6 @@ export const Import: React.FC = () => {
     "indonesia": "Selamat pagi"
   },
   {
-    "id": "custom_id_1", 
     "japanese": "猫", 
     "romaji": "neko",
     "indonesia": "kucing", 
