@@ -37,9 +37,9 @@ export const DeckDetails: React.FC = () => {
 
   const filteredCards = useMemo(() => {
     return cards.filter(c => 
-      c.japanese.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.romaji.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.indonesia.toLowerCase().includes(searchQuery.toLowerCase())
+      (c.japanese || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.romaji || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.indonesia || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [cards, searchQuery]);
 

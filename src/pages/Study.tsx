@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getCards, updateCard, getDecks } from '../utils/storage';
@@ -22,7 +21,7 @@ export const Study: React.FC = () => {
   useEffect(() => {
     const loadQueue = () => {
       setIsLoading(true);
-      const now = new Date().toISOString();
+      const now = new Date();
       const searchParams = new URLSearchParams(location.search);
       const cramMode = searchParams.get('mode') === 'cram';
       const deckId = searchParams.get('deckId');
@@ -52,7 +51,13 @@ export const Study: React.FC = () => {
         setQueue(cramQueue);
       } else {
         // Standard SM-2 Mode: Due cards only
-        const due = allCards.filter(c => c.reviewMeta.nextReview <= now);
+        const due = allCards.filter(c => {
+          const nr = c.reviewMeta?.nextReview;
+          // Treat cards without schedule (or invalid) as due
+          if (!nr) return true;
+          // Compare as Date objects for safety
+          return new Date(nr) <= now;
+        });
         setQueue(due.sort(() => Math.random() - 0.5));
       }
       
@@ -109,7 +114,7 @@ export const Study: React.FC = () => {
         if (e.key === '1') handleGrade(1); // Forgot
         if (e.key === '2') handleGrade(2); // Hard
         if (e.key === '3') handleGrade(3); // Good
-        if (e.key === '4') handleGrade(5); // Easy
+        if (e.key === '4') handleGrade(5); // Easy (Grade 5 for SM-2 boost)
       }
     };
 
@@ -286,4 +291,3 @@ export const Study: React.FC = () => {
     </div>
   );
 };
-    
