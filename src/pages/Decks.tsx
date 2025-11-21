@@ -7,7 +7,7 @@ import {
 import { Deck, Card } from '../types';
 import { 
   Search, Plus, MoreVertical, Play, Edit2, Trash2, Download, 
-  Upload, X, Layers, RotateCcw 
+  Upload, X, Layers, RotateCcw, Eye 
 } from 'lucide-react';
 
 export const Decks: React.FC = () => {
@@ -17,12 +17,10 @@ export const Decks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('');
   
-  // Modal States
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
   
-  // Undo State
   const [deletedDeck, setDeletedDeck] = useState<{ deck: Deck, cards: Card[] } | null>(null);
   const [showUndo, setShowUndo] = useState(false);
 
@@ -46,8 +44,6 @@ export const Decks: React.FC = () => {
     setCards(getCards());
   };
 
-  // --- CRUD Handlers ---
-
   const handleSaveDeck = (name: string, description: string, tags: string[]) => {
     if (editingDeck) {
       updateDeck(editingDeck.id, { name, description, tags });
@@ -65,7 +61,6 @@ export const Decks: React.FC = () => {
     
     const deckCards = cards.filter(c => c.deckId === id);
     
-    // Store for undo
     setDeletedDeck({ deck, cards: deckCards });
     setShowUndo(true);
     
@@ -94,8 +89,6 @@ export const Decks: React.FC = () => {
     document.body.removeChild(a);
   };
 
-  // --- Filter Logic ---
-
   const filteredDecks = useMemo(() => {
     return decks.filter(d => {
       const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -114,7 +107,6 @@ export const Decks: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in relative min-h-[calc(100vh-10rem)]">
       
-      {/* Header & Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-2">
@@ -139,7 +131,6 @@ export const Decks: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
          <div className="relative flex-1">
            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
@@ -172,7 +163,6 @@ export const Decks: React.FC = () => {
          )}
       </div>
 
-      {/* Deck Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
          {filteredDecks.length === 0 ? (
            <div className="col-span-full py-16 text-center text-gray-400 border border-dashed border-white/10 rounded-3xl bg-white/5 flex flex-col items-center justify-center">
@@ -201,18 +191,28 @@ export const Decks: React.FC = () => {
              return (
                <div key={deck.id} className="glass-panel group p-5 rounded-2xl flex flex-col h-full relative hover:border-purple-500/30 transition-colors">
                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-bold text-xl text-white line-clamp-1" title={deck.name}>{deck.name}</h3>
+                    <h3 
+                      className="font-bold text-xl text-white line-clamp-1 cursor-pointer hover:text-primary transition-colors" 
+                      title={deck.name}
+                      onClick={() => navigate(`/decks/${deck.id}`)}
+                    >
+                      {deck.name}
+                    </h3>
                     <div className="relative group/menu">
                        <button className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400"><MoreVertical size={16} /></button>
                        <div className="absolute right-0 top-full mt-1 w-32 bg-[#1a1a24] border border-white/10 rounded-xl shadow-xl overflow-hidden z-20 hidden group-hover/menu:block">
-                          <button onClick={() => { setEditingDeck(deck); setIsFormOpen(true); }} className="w-full text-left px-4 py-2 text-xs hover:bg-white/10 flex items-center gap-2"><Edit2 size={12} /> Edit</button>
+                          <button onClick={() => navigate(`/decks/${deck.id}`)} className="w-full text-left px-4 py-2 text-xs hover:bg-white/10 flex items-center gap-2"><Eye size={12} /> View Cards</button>
+                          <button onClick={() => { setEditingDeck(deck); setIsFormOpen(true); }} className="w-full text-left px-4 py-2 text-xs hover:bg-white/10 flex items-center gap-2"><Edit2 size={12} /> Edit Info</button>
                           <button onClick={() => handleExport(deck.id)} className="w-full text-left px-4 py-2 text-xs hover:bg-white/10 flex items-center gap-2"><Download size={12} /> Export</button>
                           <button onClick={() => handleDelete(deck.id)} className="w-full text-left px-4 py-2 text-xs hover:bg-red-500/20 text-red-400 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
                        </div>
                     </div>
                  </div>
                  
-                 <p className="text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">
+                 <p 
+                   className="text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem] cursor-pointer"
+                   onClick={() => navigate(`/decks/${deck.id}`)}
+                 >
                    {deck.description || "No description"}
                  </p>
                  
@@ -224,11 +224,14 @@ export const Decks: React.FC = () => {
                    </div>
                  )}
 
-                 <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
-                    <div className="text-xs text-gray-500">
-                      <span className="text-white font-bold">{deckCardCount}</span> cards
-                      {dueCount > 0 && <span className="ml-2 text-primary">({dueCount} due)</span>}
-                    </div>
+                 <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between gap-2">
+                    <button 
+                      onClick={() => navigate(`/decks/${deck.id}`)}
+                      className="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                    >
+                      <span className="font-bold text-white">{deckCardCount}</span> cards
+                      {dueCount > 0 && <span className="text-primary ml-1">({dueCount} due)</span>}
+                    </button>
                     
                     {deckCardCount > 0 ? (
                        <button 
@@ -239,10 +242,10 @@ export const Decks: React.FC = () => {
                        </button>
                     ) : (
                        <button 
-                        disabled 
-                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-white/5 text-gray-600 cursor-not-allowed"
+                        onClick={() => navigate(`/decks/${deck.id}`)}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-white/5 text-gray-500 hover:text-white hover:bg-white/10 transition-all"
                        >
-                         Empty
+                         Add Cards
                        </button>
                     )}
                  </div>
@@ -252,7 +255,6 @@ export const Decks: React.FC = () => {
          )}
       </div>
 
-      {/* Undo Toast */}
       {showUndo && (
         <div className="fixed bottom-8 right-8 z-50 animate-slide-up">
           <div className="bg-[#1a1a24] border border-white/20 shadow-2xl p-4 rounded-xl flex items-center gap-4">
@@ -270,7 +272,6 @@ export const Decks: React.FC = () => {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
       {isFormOpen && (
         <DeckFormModal 
           initialData={editingDeck} 
@@ -279,7 +280,6 @@ export const Decks: React.FC = () => {
         />
       )}
 
-      {/* Import Modal */}
       {isImportOpen && (
         <ImportModal onClose={() => setIsImportOpen(false)} onImportSuccess={refreshData} />
       )}
@@ -287,8 +287,6 @@ export const Decks: React.FC = () => {
     </div>
   );
 };
-
-// --- Subcomponents ---
 
 const DeckFormModal: React.FC<{ 
   initialData: Deck | null, 
@@ -343,7 +341,6 @@ const ImportModal: React.FC<{ onClose: () => void, onImportSuccess: () => void }
   const handleValidate = () => {
     try {
       const data = JSON.parse(json);
-      // Basic validation matching schema
       if (!data.title || !Array.isArray(data.cards)) throw new Error("Missing title or cards array.");
       setPreview({ title: data.title, count: data.cards.length });
       setError(null);
@@ -356,14 +353,13 @@ const ImportModal: React.FC<{ onClose: () => void, onImportSuccess: () => void }
   const handleImport = () => {
     try {
       const data = JSON.parse(json);
-      // Create Deck
       const newDeck = createDeck(data.title, data.description || '', data.tags || []);
       
-      // Map cards to new deck ID
       const newCards = data.cards.map((c: any) => ({
         ...c,
         deckId: newDeck.id,
-        // Ensure defaults if missing
+        // Auto generate ID if missing in import
+        id: c.id || `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         reviewMeta: c.reviewMeta || { ef: 2.5, interval: 0, repetitions: 0, nextReview: new Date().toISOString() },
         tags: c.tags || [],
         createdAt: new Date().toISOString()

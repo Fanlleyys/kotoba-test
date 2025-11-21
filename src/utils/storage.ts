@@ -4,7 +4,6 @@ import { getInitialReviewMeta } from './sm2';
 const CARD_STORAGE_KEY = 'katasensei_cards_v1';
 const DECK_STORAGE_KEY = 'katasensei_decks_v1';
 
-// Seed data matching the prompt requirements
 const SEED_DECKS: Deck[] = [
   {
     id: 'deck-makanan',
@@ -33,7 +32,6 @@ const SEED_DECKS: Deck[] = [
 ];
 
 const SEED_CARDS: Card[] = [
-  // Makanan Deck
   {
     id: "m1",
     deckId: "deck-makanan",
@@ -67,7 +65,6 @@ const SEED_CARDS: Card[] = [
     createdAt: new Date().toISOString(),
     reviewMeta: getInitialReviewMeta()
   },
-  // Minuman Deck
   {
     id: "d1",
     deckId: "deck-minuman",
@@ -90,7 +87,6 @@ const SEED_CARDS: Card[] = [
     createdAt: new Date().toISOString(),
     reviewMeta: getInitialReviewMeta()
   },
-  // Basics (Legacy/Extra)
   {
     id: "k1",
     deckId: "deck-basics",
@@ -115,14 +111,11 @@ const SEED_CARDS: Card[] = [
   }
 ];
 
-// --- Deck Operations ---
-
 export const getDecks = (): Deck[] => {
   try {
     const stored = localStorage.getItem(DECK_STORAGE_KEY);
     if (!stored) {
       saveDecks(SEED_DECKS);
-      // Ensure cards are seeded if decks are seeded
       const cardStored = localStorage.getItem(CARD_STORAGE_KEY);
       if (!cardStored) saveCards(SEED_CARDS);
       return SEED_DECKS;
@@ -134,13 +127,17 @@ export const getDecks = (): Deck[] => {
 };
 
 export const saveDecks = (decks: Deck[]) => {
-  localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(decks));
+  try {
+    localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(decks));
+  } catch (e) {
+    console.error("Failed to save decks", e);
+  }
 };
 
-export const createDeck = (name: string, description: string = '', tags: string[] = []) => {
+export const createDeck = (name: string, description: string, tags: string[]): Deck => {
   const decks = getDecks();
   const newDeck: Deck = {
-    id: `deck_${Date.now()}`,
+    id: 'deck-' + Date.now(),
     name,
     description,
     tags,
@@ -151,54 +148,49 @@ export const createDeck = (name: string, description: string = '', tags: string[
   return newDeck;
 };
 
-export const updateDeck = (id: string, updates: Partial<Omit<Deck, 'id' | 'createdAt'>>) => {
+export const updateDeck = (id: string, updates: Partial<Deck>) => {
   const decks = getDecks();
-  const updated = decks.map(d => d.id === id ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d);
-  saveDecks(updated);
+  const index = decks.findIndex(d => d.id === id);
+  if (index !== -1) {
+    decks[index] = { ...decks[index], ...updates, updatedAt: new Date().toISOString() };
+    saveDecks(decks);
+  }
 };
 
-export const deleteDeck = (deckId: string) => {
+export const deleteDeck = (id: string) => {
   const decks = getDecks();
-  const remainingDecks = decks.filter(d => d.id !== deckId);
-  saveDecks(remainingDecks);
-
-  // Also delete associated cards (or we could orphan them, but cleaner to delete)
+  saveDecks(decks.filter(d => d.id !== id));
+  
+  // Also delete associated cards
   const cards = getCards();
-  const remainingCards = cards.filter(c => c.deckId !== deckId);
-  saveCards(remainingCards);
+  saveCards(cards.filter(c => c.deckId !== id));
 };
 
 export const restoreDeck = (deck: Deck, cards: Card[]) => {
-  const currentDecks = getDecks();
-  const currentCards = getCards();
-  
-  // Avoid duplicates if clicked twice
-  if (!currentDecks.find(d => d.id === deck.id)) {
-    saveDecks([...currentDecks, deck]);
-  }
-  
-  // Add back cards that don't exist
-  const existingCardIds = new Set(currentCards.map(c => c.id));
-  const cardsRestored = cards.filter(c => !existingCardIds.has(c.id));
-  saveCards([...currentCards, ...cardsRestored]);
+  const decks = getDecks();
+  saveDecks([...decks, deck]);
+  addCards(cards);
 };
 
 // --- Card Operations ---
 
-export const getCards = (deckIdFilter?: string): Card[] => {
+export const getCards = (deckId?: string): Card[] => {
   try {
     const stored = localStorage.getItem(CARD_STORAGE_KEY);
-    let cards: Card[] = stored ? JSON.parse(stored) : [];
+    let allCards: Card[] = [];
     
-    if (cards.length === 0 && !stored) {
-      cards = SEED_CARDS;
-      saveCards(cards);
+    if (!stored) {
+       // Seed if completely empty on first load logic handled in getDecks
+       // but double check here
+       allCards = SEED_CARDS;
+    } else {
+       allCards = JSON.parse(stored);
     }
 
-    if (deckIdFilter) {
-      return cards.filter(c => c.deckId === deckIdFilter);
+    if (deckId) {
+      return allCards.filter(c => c.deckId === deckId);
     }
-    return cards;
+    return allCards;
   } catch (e) {
     console.error("Failed to load cards", e);
     return [];
@@ -215,6 +207,7 @@ export const saveCards = (cards: Card[]) => {
 
 export const addCards = (newCards: Card[]) => {
   const current = getCards();
+  // Simple deduplication by ID
   const currentIds = new Set(current.map(c => c.id));
   const filteredNew = newCards.filter(c => !currentIds.has(c.id));
   saveCards([...current, ...filteredNew]);
@@ -235,15 +228,13 @@ export const deleteCard = (cardId: string) => {
   saveCards(filtered);
 };
 
-// --- Import/Export ---
-
 export const exportDeckToJSON = (deckId: string): string => {
   const decks = getDecks();
-  const cards = getCards(deckId);
   const deck = decks.find(d => d.id === deckId);
-
   if (!deck) return '';
 
+  const cards = getCards(deckId);
+  
   const exportData: DeckExport = {
     id: deck.id,
     title: deck.name,

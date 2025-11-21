@@ -35,18 +35,19 @@ export const Import: React.FC = () => {
         throw new Error("Root element must be an array");
       }
 
-      // Basic validation and transformation
       const validCards: Card[] = parsed.map((item: any, index) => {
-        if (!item.id || !item.japanese || !item.indonesia) {
-           throw new Error(`Item at index ${index} missing required fields (id, japanese, indonesia)`);
+        // Allow missing ID (auto-generate)
+        // Require Japanese OR Indonesia (allow partial)
+        if ((!item.japanese && !item.indonesia)) {
+           throw new Error(`Item at index ${index} must have at least 'japanese' or 'indonesia' field.`);
         }
 
         return {
-          id: String(item.id),
+          id: item.id ? String(item.id) : `imported-${Date.now()}-${index}-${Math.random().toString(36).substr(2,5)}`,
           deckId: selectedDeckId,
           romaji: String(item.romaji || ''),
-          japanese: String(item.japanese),
-          indonesia: String(item.indonesia),
+          japanese: String(item.japanese || '?'),
+          indonesia: String(item.indonesia || '?'),
           example: String(item.example || ''),
           tags: Array.isArray(item.tags) ? item.tags : [],
           createdAt: new Date().toISOString(),
@@ -58,8 +59,8 @@ export const Import: React.FC = () => {
       setSuccess(`Successfully imported ${validCards.length} cards!`);
       setJsonInput('');
       
-      // Redirect after short delay
-      setTimeout(() => navigate('/decks'), 1500);
+      // Redirect to the specific deck details instead of general deck list
+      setTimeout(() => navigate(`/decks/${selectedDeckId}`), 1500);
 
     } catch (err: any) {
       setError(err.message || "Invalid JSON format");
@@ -89,17 +90,20 @@ export const Import: React.FC = () => {
            </div>
         </div>
 
-        <p className="mb-4 text-gray-400">Paste your JSON array below to add new cards to your deck. IDs must be unique.</p>
+        <p className="mb-4 text-gray-400">Paste your JSON array below. Fields <code>id</code>, <code>romaji</code>, etc are optional (ID will be auto-generated if missing).</p>
         
         <div className="bg-black/30 rounded-xl border border-white/10 p-4 mb-6 font-mono text-xs text-gray-500 overflow-x-auto">
           <pre>{`[
   {
-    "id": "unique_id_1",
-    "romaji": "ohayou",
     "japanese": "おはよう",
-    "indonesia": "Selamat pagi",
-    "example": "おはようございます",
-    "tags": ["greeting"]
+    "indonesia": "Selamat pagi"
+  },
+  {
+    "id": "custom_id_1", 
+    "japanese": "猫", 
+    "romaji": "neko",
+    "indonesia": "kucing", 
+    "tags": ["animal"]
   }
 ]`}</pre>
         </div>

@@ -18,8 +18,6 @@ export const Dashboard: React.FC = () => {
     const due = allCards.filter(c => c.reviewMeta.nextReview <= now);
     setDueCount(due.length);
 
-    // Calculate Retention: Percentage of cards with EF > 2.5 (arbitrary threshold for "well known") 
-    // or interval > 3 days. Let's use Interval > 3.
     const learnedCards = allCards.filter(c => c.reviewMeta.repetitions > 0).length;
     const retainedCards = allCards.filter(c => c.reviewMeta.interval > 3).length;
     const rate = learnedCards > 0 ? Math.round((retainedCards / learnedCards) * 100) : 0;
@@ -32,7 +30,6 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
       
-      {/* Greeting */}
       <header className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">
           Welcome back, Sensei.
@@ -44,12 +41,9 @@ export const Dashboard: React.FC = () => {
         </p>
       </header>
 
-      {/* Hero Section - Dynamic based on state */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Main CTA Card */}
         <div className="lg:col-span-2 glass-panel p-8 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[280px]">
-          {/* Decorative Background */}
           <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
             <Brain size={180} className="text-primary rotate-12" />
           </div>
@@ -137,7 +131,6 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Stats Sidebar */}
         <div className="flex flex-col gap-4">
            <div className="glass-panel p-6 rounded-3xl flex-1 flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-2 text-violet-300 font-semibold uppercase tracking-wider text-xs">
@@ -165,7 +158,6 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Detailed Stats Section */}
       <div className="glass-panel p-8 rounded-3xl">
           <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
