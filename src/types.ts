@@ -8,7 +8,7 @@ export interface ReviewMeta {
 
 export interface Card {
   id: string;
-  deckId: string;     // Added to support multiple decks
+  deckId: string;
   romaji: string;
   japanese: string;
   indonesia: string;
@@ -21,11 +21,22 @@ export interface Card {
 export interface Deck {
   id: string;
   name: string;
+  description?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 // SM-2 Quality Grade: 0-5
-// 0: Total blackout, 5: Perfect recall
 export type Grade = 0 | 1 | 2 | 3 | 4 | 5;
+
+export interface DeckExport {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  cards: Card[];
+}
 
 export interface ImportData {
   id: string;
@@ -35,3 +46,4 @@ export interface ImportData {
   example: string;
   tags?: string[];
 }
+    

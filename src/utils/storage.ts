@@ -1,17 +1,71 @@
 
-import { Card, Deck, ReviewMeta } from '../types';
+import { Card, Deck, ReviewMeta, DeckExport } from '../types';
 import { getInitialReviewMeta } from './sm2';
 
-const CARD_STORAGE_KEY = 'katasensei_deck_v1';
-const DECK_STORAGE_KEY = 'katasensei_decks_meta_v1';
+const CARD_STORAGE_KEY = 'katasensei_cards_v1';
+const DECK_STORAGE_KEY = 'katasensei_decks_v1';
 
-const DEFAULT_DECK_ID = 'default-deck';
+const DEFAULT_DECK_ID = 'deck-makanan';
 
-// Seed data for first run
-const SEED_DATA: Card[] = [
+// Seed data matching the prompt requirements
+const SEED_DECKS: Deck[] = [
+  {
+    id: 'deck-makanan',
+    name: 'Makanan',
+    description: 'Kosakata tentang makanan dan minuman',
+    tags: ['vocab', 'makanan'],
+    createdAt: new Date('2025-01-01').toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'deck-basics',
+    name: 'Greetings & Basics',
+    description: 'Essential phrases for daily conversation',
+    tags: ['basics', 'sapaan'],
+    createdAt: new Date('2025-01-02').toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+
+const SEED_CARDS: Card[] = [
+  // Makanan Deck
+  {
+    id: "m1",
+    deckId: "deck-makanan",
+    romaji: "neko",
+    japanese: "猫",
+    indonesia: "Kucing", // Techncially animal but requested in prompt sample
+    example: "猫がベッドで寝ています。",
+    tags: ["hewan", "makanan?"],
+    createdAt: new Date().toISOString(),
+    reviewMeta: getInitialReviewMeta()
+  },
+  {
+    id: "m2",
+    deckId: "deck-makanan",
+    romaji: "sushi",
+    japanese: "寿司",
+    indonesia: "Sushi",
+    example: "寿司は美味しい。",
+    tags: ["makanan"],
+    createdAt: new Date().toISOString(),
+    reviewMeta: getInitialReviewMeta()
+  },
+  {
+    id: "m3",
+    deckId: "deck-makanan",
+    romaji: "mikusu",
+    japanese: "ミックス",
+    indonesia: "Campuran",
+    example: "サラダをミックスする。",
+    tags: ["makanan", "kata-benda"],
+    createdAt: new Date().toISOString(),
+    reviewMeta: getInitialReviewMeta()
+  },
+  // Basics Deck
   {
     id: "k1",
-    deckId: DEFAULT_DECK_ID,
+    deckId: "deck-basics",
     romaji: "konnichiwa",
     japanese: "こんにちは",
     indonesia: "Selamat siang / Halo",
@@ -22,23 +76,12 @@ const SEED_DATA: Card[] = [
   },
   {
     id: "k2",
-    deckId: DEFAULT_DECK_ID,
+    deckId: "deck-basics",
     romaji: "arigatou",
     japanese: "ありがとう",
     indonesia: "Terima kasih",
     example: "手伝ってくれてありがとう。",
     tags: ["politeness"],
-    createdAt: new Date().toISOString(),
-    reviewMeta: getInitialReviewMeta()
-  },
-  {
-    id: "k3",
-    deckId: DEFAULT_DECK_ID,
-    romaji: "neko",
-    japanese: "猫",
-    indonesia: "Kucing",
-    example: "猫がベッドで寝ています。",
-    tags: ["hewan"],
     createdAt: new Date().toISOString(),
     reviewMeta: getInitialReviewMeta()
   }
@@ -50,13 +93,15 @@ export const getDecks = (): Deck[] => {
   try {
     const stored = localStorage.getItem(DECK_STORAGE_KEY);
     if (!stored) {
-      const defaultDeck = { id: DEFAULT_DECK_ID, name: 'Main Deck' };
-      saveDecks([defaultDeck]);
-      return [defaultDeck];
+      saveDecks(SEED_DECKS);
+      // Ensure cards are seeded if decks are seeded
+      const cardStored = localStorage.getItem(CARD_STORAGE_KEY);
+      if (!cardStored) saveCards(SEED_CARDS);
+      return SEED_DECKS;
     }
     return JSON.parse(stored);
   } catch (e) {
-    return [{ id: DEFAULT_DECK_ID, name: 'Main Deck' }];
+    return SEED_DECKS;
   }
 };
 
@@ -64,71 +109,67 @@ export const saveDecks = (decks: Deck[]) => {
   localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(decks));
 };
 
-export const createDeck = (name: string) => {
+export const createDeck = (name: string, description: string = '', tags: string[] = []) => {
   const decks = getDecks();
   const newDeck: Deck = {
     id: `deck_${Date.now()}`,
-    name
+    name,
+    description,
+    tags,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   saveDecks([...decks, newDeck]);
   return newDeck;
 };
 
+export const updateDeck = (id: string, updates: Partial<Omit<Deck, 'id' | 'createdAt'>>) => {
+  const decks = getDecks();
+  const updated = decks.map(d => d.id === id ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d);
+  saveDecks(updated);
+};
+
 export const deleteDeck = (deckId: string) => {
   const decks = getDecks();
-  if (decks.length <= 1) return; // Prevent deleting last deck
-  
   const remainingDecks = decks.filter(d => d.id !== deckId);
   saveDecks(remainingDecks);
 
-  // Move cards from deleted deck to the first available deck to prevent data loss
-  const fallbackDeckId = remainingDecks[0].id;
-  const allCards = getCards();
-  const updatedCards = allCards.map(c => 
-    c.deckId === deckId ? { ...c, deckId: fallbackDeckId } : c
-  );
-  saveCards(updatedCards);
+  // Also delete associated cards (or we could orphan them, but cleaner to delete)
+  const cards = getCards();
+  const remainingCards = cards.filter(c => c.deckId !== deckId);
+  saveCards(remainingCards);
 };
 
-export const updateDeckName = (deckId: string, name: string) => {
-  const decks = getDecks();
-  const updated = decks.map(d => d.id === deckId ? { ...d, name } : d);
-  saveDecks(updated);
+export const restoreDeck = (deck: Deck, cards: Card[]) => {
+  const currentDecks = getDecks();
+  const currentCards = getCards();
+  
+  // Avoid duplicates if clicked twice
+  if (!currentDecks.find(d => d.id === deck.id)) {
+    saveDecks([...currentDecks, deck]);
+  }
+  
+  // Add back cards that don't exist
+  const existingCardIds = new Set(currentCards.map(c => c.id));
+  const cardsRestored = cards.filter(c => !existingCardIds.has(c.id));
+  saveCards([...currentCards, ...cardsRestored]);
 };
 
 // --- Card Operations ---
 
-export const getCards = (): Card[] => {
+export const getCards = (deckIdFilter?: string): Card[] => {
   try {
     const stored = localStorage.getItem(CARD_STORAGE_KEY);
-    if (!stored) {
-      localStorage.setItem(CARD_STORAGE_KEY, JSON.stringify(SEED_DATA));
-      // Ensure default deck exists
-      getDecks(); 
-      return SEED_DATA;
-    }
+    let cards: Card[] = stored ? JSON.parse(stored) : [];
     
-    let cards: Card[] = JSON.parse(stored);
-    
-    // Migration: Ensure all cards have a deckId
-    let needsSave = false;
-    cards = cards.map(c => {
-      if (!c.deckId) {
-        needsSave = true;
-        return { ...c, deckId: DEFAULT_DECK_ID };
-      }
-      return c;
-    });
-
-    if (needsSave) {
+    if (cards.length === 0 && !stored) {
+      cards = SEED_CARDS;
       saveCards(cards);
-      // Ensure default deck exists if we just migrated cards to it
-      const decks = getDecks();
-      if (!decks.find(d => d.id === DEFAULT_DECK_ID)) {
-        saveDecks([...decks, { id: DEFAULT_DECK_ID, name: 'Main Deck' }]);
-      }
     }
 
+    if (deckIdFilter) {
+      return cards.filter(c => c.deckId === deckIdFilter);
+    }
     return cards;
   } catch (e) {
     console.error("Failed to load cards", e);
@@ -146,7 +187,6 @@ export const saveCards = (cards: Card[]) => {
 
 export const addCards = (newCards: Card[]) => {
   const current = getCards();
-  // Simple deduplication by ID
   const currentIds = new Set(current.map(c => c.id));
   const filteredNew = newCards.filter(c => !currentIds.has(c.id));
   saveCards([...current, ...filteredNew]);
@@ -165,4 +205,24 @@ export const deleteCard = (cardId: string) => {
   const current = getCards();
   const filtered = current.filter(c => c.id !== cardId);
   saveCards(filtered);
+};
+
+// --- Import/Export ---
+
+export const exportDeckToJSON = (deckId: string): string => {
+  const decks = getDecks();
+  const cards = getCards(deckId);
+  const deck = decks.find(d => d.id === deckId);
+
+  if (!deck) return '';
+
+  const exportData: DeckExport = {
+    id: deck.id,
+    title: deck.name,
+    description: deck.description || '',
+    tags: deck.tags || [],
+    cards: cards
+  };
+
+  return JSON.stringify(exportData, null, 2);
 };

@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { getCards, updateCard } from '../utils/storage';
+import { getCards, updateCard, getDecks } from '../utils/storage';
 import { calculateSM2 } from '../utils/sm2';
 import { Card, Grade } from '../types';
-import { RefreshCw, Check, X, RotateCcw, ArrowRight, Keyboard, Zap } from 'lucide-react';
+import { RefreshCw, Check, Keyboard, Zap, Layers } from 'lucide-react';
 
 export const Study: React.FC = () => {
   const [queue, setQueue] = useState<Card[]>([]);
@@ -13,28 +13,38 @@ export const Study: React.FC = () => {
   const [isFinished, setIsFinished] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCramming, setIsCramming] = useState(false);
+  const [deckName, setDeckName] = useState<string>('All Decks');
 
   const location = useLocation();
 
   // Load cards
   useEffect(() => {
     const loadQueue = () => {
-      const allCards = getCards();
       const now = new Date().toISOString();
-      
-      // Check for Cram Mode param
       const searchParams = new URLSearchParams(location.search);
       const cramMode = searchParams.get('mode') === 'cram';
+      const deckId = searchParams.get('deckId');
+
+      // Fetch filtered cards
+      const allCards = getCards(deckId || undefined);
+      
+      // Get deck name if filtering
+      if (deckId) {
+        const decks = getDecks();
+        const d = decks.find(d => d.id === deckId);
+        if (d) setDeckName(d.name);
+      }
+
       setIsCramming(cramMode);
 
       if (cramMode) {
-        // Cram Mode: Sort by random or by "staleness"
+        // Cram Mode: Random 20 cards from selection
         const cramQueue = [...allCards]
           .sort(() => Math.random() - 0.5)
           .slice(0, 20);
         setQueue(cramQueue);
       } else {
-        // Standard SM-2 Mode
+        // Standard SM-2 Mode: Due cards only
         const due = allCards.filter(c => c.reviewMeta.nextReview <= now);
         setQueue(due.sort(() => Math.random() - 0.5));
       }
@@ -95,21 +105,22 @@ export const Study: React.FC = () => {
           <Check size={48} className="text-white" />
         </div>
         <h2 className="text-3xl font-bold mb-2 text-white">All caught up!</h2>
-        <p className="text-violet-200 mb-8">You have no cards due for review right now.</p>
+        <p className="text-violet-200 mb-2">{deckName}</p>
+        <p className="text-gray-400 mb-8">You have no cards due for review right now.</p>
         
         <div className="flex flex-col gap-3 w-full px-8">
           <Link 
-            to="/study?mode=cram" 
+            to={`/study?mode=cram${location.search.includes('deckId') ? '&' + location.search.split('?')[1] : ''}`} 
             className="py-4 rounded-xl bg-primary hover:bg-violet-600 text-white font-bold shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-2"
           >
             <Zap size={20} fill="currentColor" />
             Review Ahead (Cram Mode)
           </Link>
           <Link 
-            to="/" 
+            to="/decks" 
             className="py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-violet-200 font-semibold transition-all"
           >
-            Back to Dashboard
+            Back to Decks
           </Link>
         </div>
       </div>
@@ -137,14 +148,14 @@ export const Study: React.FC = () => {
           <RefreshCw size={48} className="text-white" />
         </div>
         <h2 className="text-3xl font-bold mb-2 text-white">Session Complete!</h2>
-        <p className="text-violet-200 mb-8">You reviewed {queue.length} cards.</p>
+        <p className="text-violet-200 mb-8">You reviewed {queue.length} cards from {deckName}.</p>
         
         <div className="flex gap-4">
-           <Link to="/" className="px-8 py-3 rounded-xl bg-white text-black font-bold hover:scale-105 transition-transform">
-             Dashboard
+           <Link to="/decks" className="px-8 py-3 rounded-xl bg-white text-black font-bold hover:scale-105 transition-transform">
+             Decks
            </Link>
-           <Link to="/study?mode=cram" className="px-8 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold transition-all">
-             Keep Learning
+           <Link to="/" className="px-8 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold transition-all">
+             Dashboard
            </Link>
         </div>
       </div>
@@ -154,9 +165,12 @@ export const Study: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-6 text-sm text-violet-300 font-mono">
-        <span className="bg-white/5 px-3 py-1 rounded-full border border-white/10">
-          {isCramming ? '⚡ Cram Mode' : '📚 Spaced Repetition'}
-        </span>
+        <div className="flex items-center gap-2">
+            <span className="bg-white/5 px-3 py-1 rounded-full border border-white/10 flex items-center gap-1">
+              <Layers size={12} /> {deckName}
+            </span>
+            {isCramming && <span className="text-yellow-400 text-xs">⚡ Cram</span>}
+        </div>
         <span className="flex items-center gap-2">
           {currentIndex + 1} / {queue.length}
         </span>

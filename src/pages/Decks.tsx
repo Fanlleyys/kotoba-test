@@ -1,235 +1,421 @@
 
-import React, { useState, useEffect } from 'react';
-import { getDecks, getCards, createDeck, updateDeckName, deleteDeck, deleteCard, updateCard } from '../utils/storage';
-import { Deck, Card } from '../types';
-import { Folder, Plus, Trash2, Edit2, MoreVertical, Layers, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { 
+  getDecks, getCards, createDeck, updateDeck, deleteDeck, restoreDeck, 
+  addCards, exportDeckToJSON 
+} from '../utils/storage';
+import { Deck, Card, DeckExport } from '../types';
+import { 
+  Search, Plus, MoreVertical, Play, Edit2, Trash2, Download, 
+  Upload, X, Layers, Tag, RotateCcw 
+} from 'lucide-react';
 
 export const Decks: React.FC = () => {
+  const navigate = useNavigate();
   const [decks, setDecks] = useState<Deck[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
-  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
-  const [newDeckName, setNewDeckName] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string>('');
+  
+  // Modal States
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
+  
+  // Undo State
+  const [deletedDeck, setDeletedDeck] = useState<{ deck: Deck, cards: Card[] } | null>(null);
+  const [showUndo, setShowUndo] = useState(false);
 
   useEffect(() => {
     refreshData();
   }, []);
 
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    if (showUndo) {
+      timeout = setTimeout(() => {
+        setShowUndo(false);
+        setDeletedDeck(null);
+      }, 5000);
+    }
+    return () => clearTimeout(timeout);
+  }, [showUndo]);
+
   const refreshData = () => {
-    const d = getDecks();
-    setDecks(d);
+    setDecks(getDecks());
     setCards(getCards());
-    if (!selectedDeckId && d.length > 0) {
-      setSelectedDeckId(d[0].id);
+  };
+
+  // --- CRUD Handlers ---
+
+  const handleSaveDeck = (name: string, description: string, tags: string[]) => {
+    if (editingDeck) {
+      updateDeck(editingDeck.id, { name, description, tags });
+    } else {
+      createDeck(name, description, tags);
     }
-  };
-
-  const handleCreateDeck = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDeckName.trim()) return;
-    const newDeck = createDeck(newDeckName);
-    setNewDeckName('');
-    setIsCreating(false);
-    refreshData();
-    setSelectedDeckId(newDeck.id);
-  };
-
-  const handleDeleteDeck = (id: string) => {
-    if (window.confirm('Are you sure? Cards in this deck will be moved to another deck.')) {
-      deleteDeck(id);
-      refreshData();
-      // If we deleted the selected deck, select the first available
-      if (selectedDeckId === id) {
-        const remaining = getDecks();
-        if (remaining.length > 0) setSelectedDeckId(remaining[0].id);
-      }
-    }
-  };
-
-  const handleUpdateDeckName = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingDeckId && editingName.trim()) {
-      updateDeckName(editingDeckId, editingName);
-      setEditingDeckId(null);
-      refreshData();
-    }
-  };
-
-  const handleMoveCard = (card: Card, targetDeckId: string) => {
-    updateCard({ ...card, deckId: targetDeckId });
+    setIsFormOpen(false);
+    setEditingDeck(null);
     refreshData();
   };
 
-  const handleDeleteCard = (cardId: string) => {
-    if (window.confirm('Delete this card?')) {
-      deleteCard(cardId);
+  const handleDelete = (id: string) => {
+    const deck = decks.find(d => d.id === id);
+    if (!deck) return;
+    
+    const deckCards = cards.filter(c => c.deckId === id);
+    
+    // Store for undo
+    setDeletedDeck({ deck, cards: deckCards });
+    setShowUndo(true);
+    
+    deleteDeck(id);
+    refreshData();
+  };
+
+  const handleUndo = () => {
+    if (deletedDeck) {
+      restoreDeck(deletedDeck.deck, deletedDeck.cards);
+      setShowUndo(false);
+      setDeletedDeck(null);
       refreshData();
     }
   };
 
-  const filteredCards = cards.filter(c => c.deckId === selectedDeckId);
+  const handleExport = (id: string) => {
+    const json = exportDeckToJSON(id);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `katasensei-deck-${id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // --- Filter Logic ---
+
+  const filteredDecks = useMemo(() => {
+    return decks.filter(d => {
+      const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            (d.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+      const matchesTag = selectedTag ? d.tags?.includes(selectedTag) : true;
+      return matchesSearch && matchesTag;
+    });
+  }, [decks, searchQuery, selectedTag]);
+
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    decks.forEach(d => d.tags?.forEach(t => tags.add(t)));
+    return Array.from(tags).sort();
+  }, [decks]);
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col md:flex-row gap-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in relative min-h-[calc(100vh-10rem)]">
       
-      {/* Left Sidebar: Deck List */}
-      <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Layers className="text-purple-400" size={20} /> Decks
-          </h2>
-          <button 
-            onClick={() => setIsCreating(!isCreating)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          >
-            <Plus size={20} />
-          </button>
+      {/* Header & Toolbar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+            <Layers className="text-primary" /> Library
+          </h1>
+          <p className="text-gray-400 text-sm">Manage your flashcard collections</p>
         </div>
-
-        {isCreating && (
-          <form onSubmit={handleCreateDeck} className="mb-2">
-            <input 
-              autoFocus
-              type="text" 
-              placeholder="Deck Name..." 
-              className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 text-white"
-              value={newDeckName}
-              onChange={e => setNewDeckName(e.target.value)}
-              onBlur={() => !newDeckName && setIsCreating(false)}
-            />
-          </form>
-        )}
-
-        <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-          {decks.map(deck => (
-            <div 
-              key={deck.id}
-              onClick={() => setSelectedDeckId(deck.id)}
-              className={`
-                group flex items-center justify-between p-3 rounded-xl cursor-pointer border transition-all
-                ${selectedDeckId === deck.id 
-                  ? 'bg-purple-500/20 border-purple-500/50 text-white' 
-                  : 'bg-glass-panel border-transparent hover:bg-white/5 text-gray-400'}
-              `}
-            >
-              {editingDeckId === deck.id ? (
-                <form onSubmit={handleUpdateDeckName} className="flex-1 mr-2" onClick={e => e.stopPropagation()}>
-                   <input 
-                    autoFocus
-                    className="w-full bg-transparent border-b border-purple-500 outline-none text-white"
-                    value={editingName}
-                    onChange={e => setEditingName(e.target.value)}
-                    onBlur={() => setEditingDeckId(null)}
-                   />
-                </form>
-              ) : (
-                <div className="flex flex-col">
-                  <span className="font-medium">{deck.name}</span>
-                  <span className="text-xs opacity-60">{cards.filter(c => c.deckId === deck.id).length} cards</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setEditingDeckId(deck.id); setEditingName(deck.name); }}
-                  className="p-1.5 hover:bg-white/10 rounded-md"
-                >
-                  <Edit2 size={14} />
-                </button>
-                {decks.length > 1 && (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleDeleteDeck(deck.id); }}
-                    className="p-1.5 hover:bg-red-500/20 text-red-400 rounded-md"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+        
+        <div className="flex flex-wrap gap-2">
+           <button 
+             onClick={() => setIsImportOpen(true)}
+             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium transition-colors"
+           >
+             <Upload size={16} /> Import
+           </button>
+           <button 
+             onClick={() => { setEditingDeck(null); setIsFormOpen(true); }}
+             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-violet-600 text-white text-sm font-bold shadow-lg hover:shadow-purple-500/25 transition-all"
+           >
+             <Plus size={18} /> Create Deck
+           </button>
         </div>
       </div>
 
-      {/* Right Content: Deck Details */}
-      <div className="flex-1 glass-panel rounded-3xl p-6 flex flex-col overflow-hidden">
-        {selectedDeckId && (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold">
-                  {decks.find(d => d.id === selectedDeckId)?.name}
-                </h1>
-                <p className="text-gray-400 text-sm">Manage cards in this deck</p>
-              </div>
-              <div className="text-sm text-gray-500 bg-white/5 px-3 py-1 rounded-full">
-                {filteredCards.length} Cards
-              </div>
-            </div>
+      {/* Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+         <div className="relative flex-1">
+           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+           <input 
+             type="text" 
+             placeholder="Search decks..." 
+             className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+             value={searchQuery}
+             onChange={e => setSearchQuery(e.target.value)}
+           />
+         </div>
+         {allTags.length > 0 && (
+           <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 custom-scrollbar">
+             <button 
+               onClick={() => setSelectedTag('')}
+               className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors border ${!selectedTag ? 'bg-primary/20 border-primary text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+             >
+               All
+             </button>
+             {allTags.map(tag => (
+               <button 
+                 key={tag}
+                 onClick={() => setSelectedTag(tag === selectedTag ? '' : tag)}
+                 className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors border ${tag === selectedTag ? 'bg-primary/20 border-primary text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+               >
+                 #{tag}
+               </button>
+             ))}
+           </div>
+         )}
+      </div>
 
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-              {filteredCards.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-60">
-                  <Folder size={48} className="mb-4" />
-                  <p>This deck is empty.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredCards.map(card => (
-                    <div key={card.id} className="bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between group">
-                      <div className="min-w-0 flex-1 mr-4">
-                        <div className="flex items-baseline gap-3 mb-1">
-                           <h3 className="font-bold text-lg truncate text-white">{card.japanese}</h3>
-                           <span className="text-purple-400 text-sm">{card.romaji}</span>
-                        </div>
-                        <p className="text-gray-400 text-sm truncate">{card.indonesia}</p>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="relative group/move">
-                           <button className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white" title="Move to...">
-                             <ArrowRight size={18} />
-                           </button>
-                           {/* Dropdown for moving */}
-                           <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a24] border border-white/10 rounded-xl shadow-xl p-1 z-50 hidden group-hover/move:block">
-                             <div className="text-xs text-gray-500 px-3 py-2 uppercase font-bold">Move to...</div>
-                             {decks.filter(d => d.id !== selectedDeckId).map(targetDeck => (
-                               <button
-                                 key={targetDeck.id}
-                                 onClick={() => handleMoveCard(card, targetDeck.id)}
-                                 className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded-lg text-gray-300"
-                               >
-                                 {targetDeck.name}
-                               </button>
-                             ))}
-                             {decks.length <= 1 && <div className="px-3 py-2 text-xs text-gray-600">No other decks</div>}
-                           </div>
-                        </div>
-
-                        <button 
-                          onClick={() => handleDeleteCard(card.id)}
-                          className="p-2 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-lg transition-colors"
-                          title="Delete Card"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
+      {/* Deck Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+         {filteredDecks.length === 0 ? (
+           <div className="col-span-full py-16 text-center text-gray-400 border border-dashed border-white/10 rounded-3xl bg-white/5 flex flex-col items-center justify-center">
+             <p className="text-lg mb-6">No decks found.</p>
+             <div className="flex items-center gap-4">
+               <button 
+                 onClick={() => setIsFormOpen(true)} 
+                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-violet-600 text-white font-bold transition-all"
+               >
+                 <Plus size={18} /> Create Deck
+               </button>
+               <span className="text-sm text-gray-600">or</span>
+               <Link 
+                 to="/import" 
+                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium transition-all"
+               >
+                 <Upload size={18} /> Import JSON
+               </Link>
+             </div>
+           </div>
+         ) : (
+           filteredDecks.map(deck => {
+             const deckCardCount = cards.filter(c => c.deckId === deck.id).length;
+             const dueCount = cards.filter(c => c.deckId === deck.id && c.reviewMeta.nextReview <= new Date().toISOString()).length;
+             
+             return (
+               <div key={deck.id} className="glass-panel group p-5 rounded-2xl flex flex-col h-full relative hover:border-purple-500/30 transition-colors">
+                 <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-bold text-xl text-white line-clamp-1" title={deck.name}>{deck.name}</h3>
+                    <div className="relative group/menu">
+                       <button className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400"><MoreVertical size={16} /></button>
+                       <div className="absolute right-0 top-full mt-1 w-32 bg-[#1a1a24] border border-white/10 rounded-xl shadow-xl overflow-hidden z-20 hidden group-hover/menu:block">
+                          <button onClick={() => { setEditingDeck(deck); setIsFormOpen(true); }} className="w-full text-left px-4 py-2 text-xs hover:bg-white/10 flex items-center gap-2"><Edit2 size={12} /> Edit</button>
+                          <button onClick={() => handleExport(deck.id)} className="w-full text-left px-4 py-2 text-xs hover:bg-white/10 flex items-center gap-2"><Download size={12} /> Export</button>
+                          <button onClick={() => handleDelete(deck.id)} className="w-full text-left px-4 py-2 text-xs hover:bg-red-500/20 text-red-400 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
+                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
+                 </div>
+                 
+                 <p className="text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">
+                   {deck.description || "No description"}
+                 </p>
+                 
+                 {deck.tags && deck.tags.length > 0 && (
+                   <div className="flex flex-wrap gap-1.5 mb-6">
+                     {deck.tags.map(t => (
+                       <span key={t} className="text-[10px] px-2 py-0.5 bg-white/5 rounded text-gray-400 border border-white/5">#{t}</span>
+                     ))}
+                   </div>
+                 )}
+
+                 <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
+                    <div className="text-xs text-gray-500">
+                      <span className="text-white font-bold">{deckCardCount}</span> cards
+                      {dueCount > 0 && <span className="ml-2 text-primary">({dueCount} due)</span>}
+                    </div>
+                    
+                    {deckCardCount > 0 ? (
+                       <button 
+                        onClick={() => navigate(`/study?deckId=${deck.id}`)}
+                        className="flex items-center gap-2 bg-white/10 hover:bg-primary hover:text-white text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                       >
+                         <Play size={14} /> Study
+                       </button>
+                    ) : (
+                       <button 
+                        disabled 
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-white/5 text-gray-600 cursor-not-allowed"
+                       >
+                         Empty
+                       </button>
+                    )}
+                 </div>
+               </div>
+             );
+           })
+         )}
       </div>
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-      `}</style>
+      {/* Undo Toast */}
+      {showUndo && (
+        <div className="fixed bottom-8 right-8 z-50 animate-slide-up">
+          <div className="bg-[#1a1a24] border border-white/20 shadow-2xl p-4 rounded-xl flex items-center gap-4">
+            <div className="text-sm">Deck deleted.</div>
+            <button 
+              onClick={handleUndo}
+              className="flex items-center gap-1 text-primary font-bold text-sm hover:underline"
+            >
+              <RotateCcw size={14} /> Undo
+            </button>
+            <button onClick={() => setShowUndo(false)} className="text-gray-500 hover:text-white ml-2">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Create/Edit Modal */}
+      {isFormOpen && (
+        <DeckFormModal 
+          initialData={editingDeck} 
+          onClose={() => setIsFormOpen(false)} 
+          onSave={handleSaveDeck} 
+        />
+      )}
+
+      {/* Import Modal */}
+      {isImportOpen && (
+        <ImportModal onClose={() => setIsImportOpen(false)} onImportSuccess={refreshData} />
+      )}
+
+    </div>
+  );
+};
+
+// --- Subcomponents ---
+
+const DeckFormModal: React.FC<{ 
+  initialData: Deck | null, 
+  onClose: () => void, 
+  onSave: (name: string, desc: string, tags: string[]) => void 
+}> = ({ initialData, onClose, onSave }) => {
+  const [name, setName] = useState(initialData?.name || '');
+  const [desc, setDesc] = useState(initialData?.description || '');
+  const [tagsStr, setTagsStr] = useState(initialData?.tags?.join(', ') || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+    onSave(name, desc, tags);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+       <div className="bg-[#1a1a24] border border-white/10 w-full max-w-md rounded-2xl p-6 shadow-2xl animate-fade-in">
+         <div className="flex justify-between items-center mb-6">
+           <h2 className="text-xl font-bold text-white">{initialData ? 'Edit Deck' : 'Create New Deck'}</h2>
+           <button onClick={onClose}><X className="text-gray-400 hover:text-white" /></button>
+         </div>
+         <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs text-gray-400 uppercase font-bold mb-1">Deck Title</label>
+              <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-primary outline-none" placeholder="e.g. JLPT N5 Verbs" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 uppercase font-bold mb-1">Description</label>
+              <textarea value={desc} onChange={e => setDesc(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-primary outline-none h-20 resize-none" placeholder="What is this deck about?" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 uppercase font-bold mb-1">Tags (comma separated)</label>
+              <input type="text" value={tagsStr} onChange={e => setTagsStr(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-primary outline-none" placeholder="verb, n5, hard" />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg hover:bg-white/5 text-gray-300 text-sm">Cancel</button>
+              <button type="submit" className="px-6 py-2 rounded-lg bg-primary hover:bg-violet-600 text-white font-bold text-sm">Save Deck</button>
+            </div>
+         </form>
+       </div>
+    </div>
+  );
+};
+
+const ImportModal: React.FC<{ onClose: () => void, onImportSuccess: () => void }> = ({ onClose, onImportSuccess }) => {
+  const [json, setJson] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{title: string, count: number} | null>(null);
+
+  const handleValidate = () => {
+    try {
+      const data = JSON.parse(json);
+      // Basic validation matching schema
+      if (!data.title || !Array.isArray(data.cards)) throw new Error("Missing title or cards array.");
+      setPreview({ title: data.title, count: data.cards.length });
+      setError(null);
+    } catch (e: any) {
+      setError("Invalid JSON: " + e.message);
+      setPreview(null);
+    }
+  };
+
+  const handleImport = () => {
+    try {
+      const data = JSON.parse(json);
+      // Create Deck
+      const newDeck = createDeck(data.title, data.description || '', data.tags || []);
+      
+      // Map cards to new deck ID
+      const newCards = data.cards.map((c: any) => ({
+        ...c,
+        deckId: newDeck.id,
+        // Ensure defaults if missing
+        reviewMeta: c.reviewMeta || { ef: 2.5, interval: 0, repetitions: 0, nextReview: new Date().toISOString() },
+        tags: c.tags || [],
+        createdAt: new Date().toISOString()
+      }));
+      
+      addCards(newCards);
+      onImportSuccess();
+      onClose();
+    } catch (e) {
+      setError("Import failed.");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+       <div className="bg-[#1a1a24] border border-white/10 w-full max-w-2xl rounded-2xl p-6 shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
+         <div className="flex justify-between items-center mb-4">
+           <h2 className="text-xl font-bold text-white">Import Deck (JSON)</h2>
+           <button onClick={onClose}><X className="text-gray-400 hover:text-white" /></button>
+         </div>
+         
+         <div className="flex-1 overflow-hidden flex flex-col">
+            <textarea 
+              value={json} 
+              onChange={e => setJson(e.target.value)} 
+              onBlur={handleValidate}
+              className="flex-1 bg-black/30 border border-white/10 rounded-xl p-4 font-mono text-xs text-gray-300 resize-none focus:border-primary outline-none mb-4" 
+              placeholder='Paste JSON here: { "title": "...", "cards": [...] }'
+            />
+            
+            {error && <div className="text-red-400 text-sm mb-4 px-2"><span className="font-bold">Error:</span> {error}</div>}
+            
+            {preview && (
+               <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg mb-4 flex items-center justify-between">
+                 <div>
+                   <div className="text-green-400 font-bold">Valid Deck Found</div>
+                   <div className="text-xs text-gray-400">Title: {preview.title} • Cards: {preview.count}</div>
+                 </div>
+                 <button onClick={handleImport} className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg text-sm">
+                   Confirm Import
+                 </button>
+               </div>
+            )}
+         </div>
+         
+         {!preview && (
+           <div className="flex justify-end">
+             <button onClick={handleValidate} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm">Validate JSON</button>
+           </div>
+         )}
+       </div>
     </div>
   );
 };
