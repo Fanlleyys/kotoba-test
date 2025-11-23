@@ -64,8 +64,8 @@ export const KataCannonGame: React.FC = () => {
   }, [location.search]);
 
   // Sound Effects (Mocked)
-  const playSound = (_type: 'shoot' | 'hit' | 'wrong') => {
-    // const audio = new Audio(`/sfx/${type}.mp3`);
+  const playSound = () => {
+    // const audio = new Audio(`/sfx/sound.mp3`);
     // audio.play().catch(() => {});
   };
 
@@ -104,8 +104,8 @@ export const KataCannonGame: React.FC = () => {
     engineRef.current.setTargets(targets);
   };
 
-  const handleTargetHit = (_target: TargetEntity) => {
-    playSound('hit');
+  const handleTargetHit = () => {
+    playSound();
     
     setStats(prev => {
       const newStreak = prev.streak + 1;
@@ -124,8 +124,8 @@ export const KataCannonGame: React.FC = () => {
     }, 600);
   };
 
-  const handleWrongTarget = (_target: TargetEntity) => {
-    playSound('wrong');
+  const handleWrongTarget = () => {
+    playSound();
     
     setStats(prev => {
       const newLives = prev.lives - 1;
