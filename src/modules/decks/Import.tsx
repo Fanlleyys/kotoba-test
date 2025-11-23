@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addCards, getDecks } from '../modules/decks/api';
-import { getInitialReviewMeta } from '../services/sm2';
-import { Card, Deck } from '../modules/decks/model';
+import { addCards, getDecks } from './api';
+import { getInitialReviewMeta } from '../../services/sm2';
+import { Card, Deck } from './model';
 import { FileJson, AlertCircle, CheckCircle, ChevronDown } from 'lucide-react';
 
 export const Import: React.FC = () => {
@@ -35,7 +35,7 @@ export const Import: React.FC = () => {
         throw new Error("Root element must be an array");
       }
 
-      const validCards: Card[] = parsed.map((item: any, index) => {
+      const validCards: Card[] = parsed.map((item: any, index: number) => {
         // Allow missing ID (auto-generate)
         // Require Japanese OR Indonesia (allow partial)
         if ((!item.japanese && !item.indonesia)) {

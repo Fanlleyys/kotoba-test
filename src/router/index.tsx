@@ -4,7 +4,7 @@ import { Dashboard } from '../pages/Dashboard';
 import { Study } from '../pages/Study';
 import { Decks } from '../pages/Decks';
 import { DeckDetails } from '../pages/DeckDetails';
-import { Import } from '../pages/Import';
+import { Import } from '../modules/decks/Import';
 import { KataCannonGame } from '../game/KataCannonGame';
 
 export const AppRouter: React.FC = () => {
