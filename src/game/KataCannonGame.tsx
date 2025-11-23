@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { GameCanvas } from './ui/GameCanvas';
 import { Hud } from './ui/Hud';
 import { Controls } from './ui/Controls';
@@ -33,7 +32,7 @@ export const KataCannonGame: React.FC = () => {
   const playSound = (type: 'shoot' | 'hit' | 'wrong') => {
     // const audio = new Audio(`/sfx/${type}.mp3`);
     // audio.play().catch(() => {});
-    // console.log(`Playing sound: ${type}`);
+    console.log(`Playing sound: ${type}`);
   };
 
   const startGame = () => {
@@ -71,7 +70,7 @@ export const KataCannonGame: React.FC = () => {
     engineRef.current.setTargets(targets);
   };
 
-  const handleTargetHit = (target: TargetEntity) => {
+  const handleTargetHit = (_target: TargetEntity) => {
     playSound('hit');
     
     setStats(prev => {
@@ -91,7 +90,7 @@ export const KataCannonGame: React.FC = () => {
     }, 1000);
   };
 
-  const handleWrongTarget = (target: TargetEntity) => {
+  const handleWrongTarget = (_target: TargetEntity) => {
     playSound('wrong');
     
     setStats(prev => {

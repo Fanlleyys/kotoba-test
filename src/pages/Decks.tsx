@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDecks, useCards } from '../modules/decks/hooks';
-import { getCards, exportDeckToJSON } from '../modules/decks/api';
+import { exportDeckToJSON } from '../modules/decks/api';
 import { Deck, Card } from '../modules/decks/model';
 import { 
   Search, Plus, MoreVertical, Play, Edit2, Trash2, Download, 
-  Upload, X, Layers, RotateCcw, Eye 
+  Layers, RotateCcw, X 
 } from 'lucide-react';
 
 export const Decks: React.FC = () => {
@@ -39,10 +38,10 @@ export const Decks: React.FC = () => {
   }, [showUndo]);
 
   // Refresh all data when component mounts or relevant actions happen
-  const refreshData = () => {
-    refreshDecks();
-    refreshCards();
-  };
+  // const refreshData = () => {
+  //   refreshDecks();
+  //   refreshCards();
+  // };
 
   const handleSaveDeck = (name: string, description: string, tags: string[]) => {
     if (editingDeck) {

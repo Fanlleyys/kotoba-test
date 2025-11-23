@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { GameStats } from '../core/types';
-import { Heart, XCircle } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 interface HudProps {
   stats: GameStats;

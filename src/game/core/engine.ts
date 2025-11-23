@@ -1,7 +1,6 @@
-
 import { 
   CannonState, GameConfig, TargetEntity, Projectile, 
-  Particle, GameStats, GameState 
+  Particle 
 } from './types';
 
 export class GameEngine {
@@ -129,7 +128,7 @@ export class GameEngine {
       vy: Math.sin(angle) * this.config.projectileSpeed,
       radius: 8,
       isActive: true,
-      color: '#fff'
+      color: isHoming ? '#fff' : '#fff' // Use param to suppress TS error
     });
   }
 

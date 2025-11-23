@@ -1,5 +1,4 @@
-
-import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { GameEngine } from '../core/engine';
 import { TargetEntity } from '../core/types';
 
