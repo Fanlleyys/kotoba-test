@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, BookOpen, Upload, Zap, Layers } from 'lucide-react';
+import { LayoutGrid, BookOpen, Upload, Zap, Layers, Gamepad2 } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -34,6 +33,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </NavLink>
             <NavLink to="/decks" active={isActive('/decks')} icon={<Layers size={18} />}>
               Decks
+            </NavLink>
+            <NavLink to="/game" active={isActive('/game')} icon={<Gamepad2 size={18} />}>
+              Arcade
             </NavLink>
             <NavLink to="/import" active={isActive('/import')} icon={<Upload size={18} />}>
               Import

@@ -5,6 +5,7 @@ import { Study } from '../pages/Study';
 import { Decks } from '../pages/Decks';
 import { DeckDetails } from '../pages/DeckDetails';
 import { Import } from '../pages/Import';
+import { KataCannonGame } from '../game/KataCannonGame';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -14,6 +15,7 @@ export const AppRouter: React.FC = () => {
       <Route path="/decks" element={<Decks />} />
       <Route path="/decks/:deckId" element={<DeckDetails />} />
       <Route path="/import" element={<Import />} />
+      <Route path="/game" element={<div className="p-4 max-w-4xl mx-auto"><KataCannonGame /></div>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
