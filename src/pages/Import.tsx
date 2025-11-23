@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addCards, getDecks } from '../utils/storage';
-import { getInitialReviewMeta } from '../utils/sm2';
-import { Card, Deck } from '../types';
+import { addCards, getDecks } from '../modules/decks/api';
+import { getInitialReviewMeta } from '../services/sm2';
+import { Card, Deck } from '../modules/decks/model';
 import { FileJson, AlertCircle, CheckCircle, ChevronDown } from 'lucide-react';
 
 export const Import: React.FC = () => {

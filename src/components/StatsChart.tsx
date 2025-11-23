@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { Card } from '../types';
+import { Card } from '../modules/decks/model';
 
 interface StatsChartProps {
   cards: Card[];

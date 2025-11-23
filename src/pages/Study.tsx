@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { getCards, updateCard, getDecks } from '../utils/storage';
-import { calculateSM2 } from '../utils/sm2';
-import { Card, Grade } from '../types';
+import { getCards, updateCard, getDecks } from '../modules/decks/api';
+import { calculateSM2 } from '../services/sm2';
+import { Card, Grade } from '../modules/decks/model';
 import { RefreshCw, Check, Keyboard, Zap, Layers } from 'lucide-react';
 
 export const Study: React.FC = () => {
@@ -215,8 +215,8 @@ export const Study: React.FC = () => {
       </div>
 
       {/* Flashcard Container */}
-      {/* Responsive height: h-80 on mobile, h-96 on desktop */}
-      <div className="perspective-1000 h-80 md:h-96 cursor-pointer group touch-manipulation" onClick={() => setIsFlipped(!isFlipped)}>
+      {/* Responsive height: h-72 on mobile, h-96 on desktop */}
+      <div className="perspective-1000 h-72 md:h-96 cursor-pointer group touch-manipulation" onClick={() => setIsFlipped(!isFlipped)}>
         <div className={`relative w-full h-full transition-all duration-500 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
           
           {/* Front */}

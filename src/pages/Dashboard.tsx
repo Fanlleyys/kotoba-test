@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getCards } from '../utils/storage';
-import { Card } from '../types';
+import { getCards } from '../modules/decks/api';
+import { Card } from '../modules/decks/model';
 import { Play, TrendingUp, Clock, Brain, PlusCircle, Layers } from 'lucide-react';
 import { StatsChart } from '../components/StatsChart';
 
