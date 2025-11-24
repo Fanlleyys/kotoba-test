@@ -105,7 +105,7 @@ export class RoundManager {
         x,
         y,
         radius: 48,
-        vx: (Math.random() - 0.5) * 0.4,
+        vx: (Math.random() - 0.5) * 0.4,  
         vy: 0.4 + Math.random() * 0.4,
         isAlive: true,
         isCorrect,

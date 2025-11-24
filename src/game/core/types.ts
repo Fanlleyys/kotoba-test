@@ -1,35 +1,30 @@
-// --- GAME TYPES ---
-
-// Kita import Card structure kalau perlu, atau definisikan ulang yang simpel buat game
 export interface Card {
   id: string;
-  word: string;      // Japanese
+  word: string;
   romaji: string;
-  meaning: string;   // Indonesia
+  meaning: string;
   srsLevel: number;
+
+  // Optional, dipakai di sampleCards.ts
+  jlptLevel?: string;
 }
 
 export interface TargetEntity {
   id: string;
+
+  // Tambahan: referensi ke kartu sumber
   card: Card;
-  text: string;     // Text yang muncul di bola
+
+  text: string;
   x: number;
   y: number;
-  radius: number;
   vx: number;
   vy: number;
-  isAlive: boolean;
+  radius: number;
   isCorrect: boolean;
-  state: 'normal' | 'hit' | 'wrong';
-  scale: number;    // Efek muncul (pop-in)
-}
-
-export interface CannonState {
-  x: number;
-  y: number;
-  angle: number;
-  targetAngle: number;
-  recoil: number;
+  isAlive: boolean;
+  scale: number;
+  state: 'normal' | 'wrong';
 }
 
 export interface Projectile {
@@ -55,15 +50,25 @@ export interface Particle {
   size: number;
 }
 
+export interface CannonState {
+  x: number;
+  y: number;
+  angle: number;
+  targetAngle: number;
+  recoil: number;
+}
+
 export interface GameConfig {
   baseTargetSpeed: number;
   maxTargetsPerRound: number;
   roundDurationMs: number;
   projectileSpeed: number;
-  spawnPadding: number;
   canvasWidth: number;
   canvasHeight: number;
+  spawnPadding: number;
 }
+
+export type GameState = 'MENU' | 'PLAYING' | 'GAME_OVER';
 
 export interface GameStats {
   score: number;
@@ -75,5 +80,3 @@ export interface GameStats {
   level: number;
   round: number;
 }
-
-export type GameState = 'MENU' | 'PLAYING' | 'ROUND_TRANSITION' | 'GAME_OVER';
