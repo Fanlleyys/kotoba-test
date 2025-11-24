@@ -1,17 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addCards, getDecks } from './api';
+import { 
+  addCards, 
+  getDecks, 
+  exportAllDataToJSON, 
+  importAllDataFromJSON 
+} from './api';
 import { getInitialReviewMeta } from '../../services/sm2';
 import { Card, Deck } from './model';
-import { FileJson, AlertCircle, CheckCircle, ChevronDown } from 'lucide-react';
+import { 
+  FileJson, 
+  AlertCircle, 
+  CheckCircle, 
+  ChevronDown, 
+  Download, 
+  Upload, 
+  Database,
+  RefreshCw 
+} from 'lucide-react';
 
 export const Import: React.FC = () => {
+  const navigate = useNavigate();
+  const [decks, setDecks] = useState<Deck[]>([]);
+  
+  // State Import JSON (Fitur Lama)
+  const [selectedDeckId, setSelectedDeckId] = useState<string>('');
   const [jsonInput, setJsonInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [decks, setDecks] = useState<Deck[]>([]);
-  const [selectedDeckId, setSelectedDeckId] = useState<string>('');
-  const navigate = useNavigate();
+
+  // State Backup/Restore (Fitur Baru)
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const d = getDecks();
@@ -19,7 +39,54 @@ export const Import: React.FC = () => {
     if (d.length > 0) setSelectedDeckId(d[0].id);
   }, []);
 
-  const handleImport = () => {
+  // --- HANDLER: FULL BACKUP & RESTORE ---
+  
+  const handleDownloadBackup = () => {
+    const json = exportAllDataToJSON();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `katasensei-full-backup-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleTriggerRestore = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!window.confirm("PERINGATAN: Restore akan MENGHAPUS semua data saat ini dan menggantinya dengan data backup. Lanjutkan?")) {
+      e.target.value = ''; 
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      const ok = importAllDataFromJSON(content);
+      
+      if (ok) {
+        alert("Backup berhasil di-restore! Halaman akan dimuat ulang.");
+        window.location.reload();
+      } else {
+        setRestoreError("Format file backup tidak valid atau rusak.");
+      }
+    };
+    reader.onerror = () => setRestoreError("Gagal membaca file.");
+    reader.readAsText(file);
+    e.target.value = ''; 
+  };
+
+  // --- HANDLER: IMPORT CARDS ---
+
+  const handleImportCards = () => {
     setError(null);
     setSuccess(null);
 
@@ -36,8 +103,6 @@ export const Import: React.FC = () => {
       }
 
       const validCards: Card[] = parsed.map((item: any, index: number) => {
-        // Allow missing ID (auto-generate)
-        // Require Japanese OR Indonesia (allow partial)
         if ((!item.japanese && !item.indonesia)) {
            throw new Error(`Item at index ${index} must have at least 'japanese' or 'indonesia' field.`);
         }
@@ -59,7 +124,6 @@ export const Import: React.FC = () => {
       setSuccess(`Successfully imported ${validCards.length} cards!`);
       setJsonInput('');
       
-      // Redirect to the specific deck details instead of general deck list
       setTimeout(() => navigate(`/decks/${selectedDeckId}`), 1500);
 
     } catch (err: any) {
@@ -68,71 +132,119 @@ export const Import: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
-        <FileJson className="text-primary" />
-        Import Vocabulary
+    // Container utama dikasih padding horizontal (px-4) biar gak nempel pinggir layar HP
+    <div className="max-w-3xl mx-auto pb-24 md:pb-10 px-4">
+      
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-3 mt-4">
+        <Database className="text-primary w-6 h-6 md:w-8 md:h-8" />
+        Data Management
       </h1>
 
-      <div className="glass-panel p-8 rounded-3xl">
+      {/* SECTION 1: FULL BACKUP & RESTORE */}
+      {/* Ubah padding jadi p-5 buat mobile, md:p-8 buat desktop */}
+      <div className="glass-panel p-5 md:p-8 rounded-2xl md:rounded-3xl mb-6 border border-purple-500/20">
+        <h2 className="text-lg md:text-xl font-bold mb-3 flex items-center gap-2 text-white">
+          <RefreshCw size={20} className="text-purple-400" />
+          Full Backup & Restore
+        </h2>
         
-        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-           <label className="text-sm text-gray-400 whitespace-nowrap">Target Deck:</label>
-           <div className="relative flex-1">
+        <p className="text-gray-400 mb-6 text-sm leading-relaxed">
+          Simpan seluruh database ke file JSON, atau restore dari backup.
+          <br/>
+          <span className="text-red-400 font-medium text-xs md:text-sm block mt-1">
+            Warning: Restore akan menimpa seluruh data yang ada.
+          </span>
+        </p>
+
+        {/* Flex Col di Mobile, Row di Desktop. Button Full Width di Mobile */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={handleDownloadBackup}
+            className="flex items-center justify-center gap-2 bg-black/40 hover:bg-black/60 border border-purple-500/50 text-purple-300 font-semibold py-3 px-6 rounded-xl transition-all w-full sm:w-auto active:scale-95"
+          >
+            <Download size={18} />
+            Download Backup
+          </button>
+
+          <button
+            onClick={handleTriggerRestore}
+            className="flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/50 text-red-300 font-semibold py-3 px-6 rounded-xl transition-all w-full sm:w-auto active:scale-95"
+          >
+            <Upload size={18} />
+            Restore from File
+          </button>
+
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept=".json"
+            className="hidden" 
+          />
+        </div>
+
+        {restoreError && (
+          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-400 text-sm">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{restoreError}</span>
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 2: IMPORT CARDS (EXISTING) */}
+      <div className="glass-panel p-5 md:p-8 rounded-2xl md:rounded-3xl">
+        <h2 className="text-lg md:text-xl font-bold mb-3 flex items-center gap-2 text-white">
+          <FileJson size={20} className="text-green-400" />
+          Import Vocabulary (JSON)
+        </h2>
+        
+        <div className="flex flex-col gap-2 mb-4">
+           <label className="text-sm text-gray-400">Target Deck:</label>
+           <div className="relative w-full">
              <select 
                 value={selectedDeckId} 
                 onChange={e => setSelectedDeckId(e.target.value)}
-                className="w-full appearance-none bg-black/40 border border-white/20 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                className="w-full appearance-none bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 text-sm"
              >
                {decks.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
              </select>
-             <ChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" size={16} />
+             <ChevronDown className="absolute right-3 top-3.5 text-gray-400 pointer-events-none" size={16} />
            </div>
         </div>
-
-        <p className="mb-4 text-gray-400">Paste your JSON array below. <strong>Avoid using "id" field</strong> if you want to auto-generate unique cards.</p>
         
-        <div className="bg-black/30 rounded-xl border border-white/10 p-4 mb-6 font-mono text-xs text-gray-500 overflow-x-auto">
+        <div className="bg-black/30 rounded-xl border border-white/10 p-3 mb-4 font-mono text-[10px] md:text-xs text-gray-500 overflow-x-auto">
           <pre>{`[
-  {
-    "japanese": "おはよう",
-    "indonesia": "Selamat pagi"
-  },
-  {
-    "japanese": "猫", 
-    "romaji": "neko",
-    "indonesia": "kucing", 
-    "tags": ["animal"]
-  }
+  { "japanese": "猫", "indonesia": "kucing" },
+  { "japanese": "犬", "romaji": "inu", "indonesia": "anjing" }
 ]`}</pre>
         </div>
 
         <textarea
-          className="w-full h-64 bg-black/20 border border-white/10 rounded-xl p-4 text-white font-mono text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none"
-          placeholder="Paste JSON here..."
+          className="w-full h-32 md:h-48 bg-black/20 border border-white/10 rounded-xl p-3 text-white font-mono text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none"
+          placeholder="Paste JSON array here..."
           value={jsonInput}
           onChange={(e) => setJsonInput(e.target.value)}
         />
 
         {error && (
-          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 animate-bounce-short">
-            <AlertCircle size={18} />
-            {error}
+          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-sm animate-bounce-short">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-2 text-green-400 animate-fade-in">
-            <CheckCircle size={18} />
-            {success}
+          <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-2 text-green-400 text-sm animate-fade-in">
+            <CheckCircle size={16} className="shrink-0" />
+            <span>{success}</span>
           </div>
         )}
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6">
           <button
-            onClick={handleImport}
+            onClick={handleImportCards}
             disabled={!jsonInput}
-            className="bg-gradient-to-r from-primary to-secondary text-white font-bold py-3 px-8 rounded-full hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full md:w-auto float-right bg-gradient-to-r from-primary to-secondary text-white font-bold py-3 px-8 rounded-full hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           >
             Import JSON
           </button>

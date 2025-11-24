@@ -1,4 +1,3 @@
-
 import { Card, Deck, DeckExport } from './model';
 import { getInitialReviewMeta } from '../../services/sm2';
 import { storage } from '../../services/storage';
@@ -179,9 +178,7 @@ export const getCards = (deckId?: string): Card[] => {
   let allCards = storage.get<Card[]>(CARD_STORAGE_KEY, []);
   
   if (allCards.length === 0) {
-      // Fallback seed if somehow empty but decks exist
-      // Note: This logic is slightly different than getDecks to prevent recursion
-      // but generally handled by getDecks initialization
+      // Fallback logic handled by getDecks mostly
   }
 
   if (deckId) {
@@ -233,4 +230,54 @@ export const exportDeckToJSON = (deckId: string): string => {
   };
 
   return JSON.stringify(exportData, null, 2);
+};
+
+// --- NEW: SYSTEM WIDE BACKUP & RESTORE ---
+
+export interface BackupPayload {
+  version: number;
+  exportedAt: string;
+  decks: Deck[];
+  cards: Card[];
+}
+
+/**
+ * Export semua deck + cards ke JSON string.
+ */
+export const exportAllDataToJSON = (): string => {
+  const decks = getDecks();
+  const cards = getCards(); // semua kartu
+
+  const payload: BackupPayload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    decks,
+    cards,
+  };
+
+  return JSON.stringify(payload, null, 2);
+};
+
+/**
+ * Import full backup: replace semua deck + cards yang ada.
+ */
+export const importAllDataFromJSON = (json: string): boolean => {
+  try {
+    const parsed = JSON.parse(json) as BackupPayload;
+
+    // Validasi dasar
+    if (!parsed.decks || !parsed.cards || !Array.isArray(parsed.decks) || !Array.isArray(parsed.cards)) {
+      console.error('Invalid backup format: missing decks or cards array');
+      return false;
+    }
+
+    // Replace data lama dengan data baru
+    saveDecks(parsed.decks);
+    saveCards(parsed.cards);
+
+    return true;
+  } catch (err) {
+    console.error('Failed to import backup', err);
+    return false;
+  }
 };
