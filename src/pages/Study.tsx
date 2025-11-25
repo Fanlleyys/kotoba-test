@@ -1,5 +1,5 @@
 // src/pages/Study.tsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getCards, updateCard } from '../modules/decks/api';
 import type { Card } from '../modules/decks/model';
@@ -8,15 +8,14 @@ import type { Grade } from '../types';
 import { RefreshCw, Check, Keyboard, Gamepad2 } from 'lucide-react';
 import { KataCannonGame } from '../game/KataCannonGame';
 
-// Helper: Fisher–Yates shuffle (lebih aman daripada sort + Math.random)
-function shuffleCards(cards: Card[]): Card[] {
-  const arr = [...cards];
-  for (let i = arr.length - 1; i > 0; i--) {
+const shuffle = <T,>(arr: T[]): T[] => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  return arr;
-}
+  return copy;
+};
 
 export const Study: React.FC = () => {
   const location = useLocation();
@@ -26,77 +25,87 @@ export const Study: React.FC = () => {
   const deckId = params.get('deckId') || undefined;
   const mode = (params.get('mode') as 'flashcards' | 'arcade') || 'flashcards';
 
-  // daftar id yang dipilih dari DeckDetails (?ids=1,2,3)
-  const rawIds = params.get('ids');
-  const selectedIds = useMemo(
-    () => (rawIds ? rawIds.split(',').map((s) => s.trim()).filter(Boolean) : null),
-    [rawIds]
-  );
+  // daftar id yang dipilih dari DeckDetails (kalau ada)
+  const idsParam = params.get('ids');
+  const selectedIds = idsParam ? idsParam.split(',').filter(Boolean) : null;
 
   const [queue, setQueue] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // ini kunci untuk mematikan animasi flip ketika ganti kartu
+  const [disableFlipAnimation, setDisableFlipAnimation] = useState(false);
+
+  // ---- Load queue untuk FLASHCARDS ----
+  useEffect(() => {
+    setIsLoading(true);
+    setIsFinished(false);
+    setIsFlipped(false);
+    setCurrentIndex(0);
+
+    const all = getCards(deckId);
+    const now = new Date().toISOString();
+
+    let source: Card[] = [];
+
+    if (selectedIds && selectedIds.length > 0) {
+      // mode "subset terpilih"
+      source = all.filter((c) => selectedIds.includes(c.id));
+    } else {
+      // mode normal: due first, fallback all
+      const due = all.filter((c) => c.reviewMeta.nextReview <= now);
+      source = due.length > 0 ? due : all;
+    }
+
+    const shuffled = shuffle(source);
+    setQueue(shuffled);
+    setIsLoading(false);
+  }, [deckId, location.search, idsParam]);
+
+  // begitu currentIndex berubah, kita pastikan animasi flip aktif lagi untuk kartu berikutnya
+  useEffect(() => {
+    setDisableFlipAnimation(false);
+  }, [currentIndex]);
 
   const currentCard = queue[currentIndex];
 
-  // Load cards untuk flashcards mode
-  useEffect(() => {
-    if (!deckId) {
-      setQueue([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    const all = getCards(deckId);
-
-    // Filter sesuai id yang dipilih (kalau ada)
-    let pool: Card[] = all;
-    if (selectedIds && selectedIds.length > 0) {
-      const idSet = new Set(selectedIds);
-      pool = all.filter((c) => idSet.has(c.id));
-    }
-
-    const now = new Date().toISOString();
-    const due = pool.filter((c) => c.reviewMeta.nextReview <= now);
-    const source = due.length > 0 ? due : pool;
-
-    // acak urutan awal
-    const shuffled = shuffleCards(source);
-
-    setQueue(shuffled);
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setIsFinished(false);
-    setIsLoading(false);
-  }, [deckId, selectedIds, location.search]);
-
   const handleNext = useCallback(() => {
-    setIsFlipped(false);
-    setCurrentIndex((prev) => {
-      const nextIndex = prev + 1;
-      if (nextIndex >= queue.length) {
-        setIsFinished(true);
-        return prev;
-      }
-      return nextIndex;
-    });
-  }, [queue.length]);
+    if (queue.length === 0) return;
+
+    if (currentIndex < queue.length - 1) {
+      // ganti kartu tanpa animasi flip mundur
+      setCurrentIndex((prev) => prev + 1);
+      setIsFlipped(false);
+      setIsTransitioning(false);
+    } else {
+      setIsFinished(true);
+      setIsTransitioning(false);
+    }
+  }, [currentIndex, queue.length]);
 
   const handleGrade = useCallback(
     (grade: Grade) => {
-      if (!currentCard) return;
+      if (!currentCard || isTransitioning) return;
 
+      setIsTransitioning(true);
+
+      // 1) matikan animasi flip dulu
+      setDisableFlipAnimation(true);
+      // 2) paksa kartu posisi depan
+      setIsFlipped(false);
+
+      // 3) update SM2
       const newMeta = calculateSM2(currentCard.reviewMeta, grade);
       const updatedCard: Card = { ...currentCard, reviewMeta: newMeta };
-
       updateCard(updatedCard);
+
+      // 4) langsung next (kartu baru muncul sudah kondisi depan, tanpa animasi)
       handleNext();
     },
-    [currentCard, handleNext]
+    [currentCard, handleNext, isTransitioning]
   );
 
   // Keyboard shortcuts (flashcards only)
@@ -136,16 +145,18 @@ export const Study: React.FC = () => {
     );
   };
 
-  // Tombol "Ulangi" di akhir sesi: pakai kartu yang sama, tapi diacak ulang
-  const handleRestartSession = useCallback(() => {
+  const handleRepeat = () => {
     if (queue.length === 0) return;
-    setQueue((prev) => shuffleCards(prev)); // acak ulang
+    const reshuffled = shuffle(queue);
+    setQueue(reshuffled);
     setCurrentIndex(0);
     setIsFlipped(false);
     setIsFinished(false);
-  }, [queue.length]);
+    setIsTransitioning(false);
+    setDisableFlipAnimation(false);
+  };
 
-  // Arcade mode view
+  // ------------- ARCADE MODE -------------
   if (mode === 'arcade') {
     return (
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
@@ -175,7 +186,7 @@ export const Study: React.FC = () => {
     );
   }
 
-  // Loading state
+  // ------------- FLASHCARDS: LOADING -------------
   if (isLoading) {
     return (
       <div className="flex justify-center p-20 text-purple-300">
@@ -184,7 +195,7 @@ export const Study: React.FC = () => {
     );
   }
 
-  // Deck kosong
+  // ------------- FLASHCARDS: DECK KOSONG -------------
   if (queue.length === 0) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-6 text-center">
@@ -224,7 +235,7 @@ export const Study: React.FC = () => {
     );
   }
 
-  // Session Complete
+  // ------------- FLASHCARDS: SESSION SELESAI -------------
   if (isFinished) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-6 text-center">
@@ -254,10 +265,10 @@ export const Study: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
-              onClick={handleRestartSession}
-              className="px-8 py-3 rounded-full bg-primary text-white font-bold hover:bg-violet-600 hover:scale-105 transition-transform"
+              onClick={handleRepeat}
+              className="px-8 py-3 rounded-full bg-primary text-white font-bold hover:bg-violet-600 transition-transform hover:scale-105"
             >
-              Repeat Selection (Random)
+              Repeat This Session (Random)
             </button>
             <Link
               to="/"
@@ -271,7 +282,7 @@ export const Study: React.FC = () => {
     );
   }
 
-  // Main flashcards view
+  // ------------- FLASHCARDS: MAIN VIEW -------------
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex justify-center mb-6">
@@ -305,9 +316,11 @@ export const Study: React.FC = () => {
         onClick={() => !isFlipped && setIsFlipped(true)}
       >
         <div
-          className={`relative w-full h-full transition-all duration-500 preserve-3d ${
-            isFlipped ? 'rotate-y-180' : ''
-          }`}
+          className={[
+            'relative w-full h-full preserve-3d',
+            isFlipped ? 'rotate-y-180' : '',
+            disableFlipAnimation ? '' : 'transition-all duration-500'
+          ].join(' ')}
         >
           {/* Front */}
           <div className="absolute w-full h-full backface-hidden glass-panel rounded-3xl flex flex-col items-center justify-center p-8 border-t border-white/20 shadow-2xl">
