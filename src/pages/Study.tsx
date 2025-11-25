@@ -1,5 +1,5 @@
 // src/pages/Study.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getCards, updateCard } from '../modules/decks/api';
 import type { Card } from '../modules/decks/model';
@@ -7,6 +7,16 @@ import { calculateSM2 } from '../services/sm2';
 import type { Grade } from '../types';
 import { RefreshCw, Check, Keyboard, Gamepad2 } from 'lucide-react';
 import { KataCannonGame } from '../game/KataCannonGame';
+
+// Helper: Fisher–Yates shuffle (lebih aman daripada sort + Math.random)
+function shuffleCards(cards: Card[]): Card[] {
+  const arr = [...cards];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 export const Study: React.FC = () => {
   const location = useLocation();
@@ -16,37 +26,65 @@ export const Study: React.FC = () => {
   const deckId = params.get('deckId') || undefined;
   const mode = (params.get('mode') as 'flashcards' | 'arcade') || 'flashcards';
 
+  // daftar id yang dipilih dari DeckDetails (?ids=1,2,3)
+  const rawIds = params.get('ids');
+  const selectedIds = useMemo(
+    () => (rawIds ? rawIds.split(',').map((s) => s.trim()).filter(Boolean) : null),
+    [rawIds]
+  );
+
   const [queue, setQueue] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load cards for flashcards mode
+  const currentCard = queue[currentIndex];
+
+  // Load cards untuk flashcards mode
   useEffect(() => {
+    if (!deckId) {
+      setQueue([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
     const all = getCards(deckId);
+
+    // Filter sesuai id yang dipilih (kalau ada)
+    let pool: Card[] = all;
+    if (selectedIds && selectedIds.length > 0) {
+      const idSet = new Set(selectedIds);
+      pool = all.filter((c) => idSet.has(c.id));
+    }
+
     const now = new Date().toISOString();
+    const due = pool.filter((c) => c.reviewMeta.nextReview <= now);
+    const source = due.length > 0 ? due : pool;
 
-    const due = all.filter((c) => c.reviewMeta.nextReview <= now);
-    const source = due.length > 0 ? due : all;
+    // acak urutan awal
+    const shuffled = shuffleCards(source);
 
-    setQueue(source.sort(() => Math.random() - 0.5));
+    setQueue(shuffled);
     setCurrentIndex(0);
     setIsFlipped(false);
     setIsFinished(false);
     setIsLoading(false);
-  }, [deckId, location.search]);
-
-  const currentCard = queue[currentIndex];
+  }, [deckId, selectedIds, location.search]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < queue.length - 1) {
-      setIsFlipped(false);
-      setTimeout(() => setCurrentIndex((prev) => prev + 1), 150);
-    } else {
-      setIsFinished(true);
-    }
-  }, [currentIndex, queue.length]);
+    setIsFlipped(false);
+    setCurrentIndex((prev) => {
+      const nextIndex = prev + 1;
+      if (nextIndex >= queue.length) {
+        setIsFinished(true);
+        return prev;
+      }
+      return nextIndex;
+    });
+  }, [queue.length]);
 
   const handleGrade = useCallback(
     (grade: Grade) => {
@@ -98,11 +136,19 @@ export const Study: React.FC = () => {
     );
   };
 
+  // Tombol "Ulangi" di akhir sesi: pakai kartu yang sama, tapi diacak ulang
+  const handleRestartSession = useCallback(() => {
+    if (queue.length === 0) return;
+    setQueue((prev) => shuffleCards(prev)); // acak ulang
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setIsFinished(false);
+  }, [queue.length]);
+
   // Arcade mode view
   if (mode === 'arcade') {
     return (
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {/* Mode toggle */}
         <div className="flex justify-center mb-4">
           <div className="inline-flex bg-black/40 border border-white/10 rounded-full p-1">
             <button
@@ -129,7 +175,7 @@ export const Study: React.FC = () => {
     );
   }
 
-  // Flashcards loading state
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex justify-center p-20 text-purple-300">
@@ -178,7 +224,7 @@ export const Study: React.FC = () => {
     );
   }
 
-  // Flashcards finished
+  // Session Complete
   if (isFinished) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-6 text-center">
@@ -205,18 +251,27 @@ export const Study: React.FC = () => {
           </div>
           <h2 className="text-3xl font-bold mb-2 text-white">Session Complete</h2>
           <p className="text-gray-400 mb-8">You reviewed {queue.length} cards.</p>
-          <Link
-            to="/"
-            className="px-8 py-3 rounded-full bg-white text-black font-bold hover:scale-105 transition-transform"
-          >
-            Back to Dashboard
-          </Link>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleRestartSession}
+              className="px-8 py-3 rounded-full bg-primary text-white font-bold hover:bg-violet-600 hover:scale-105 transition-transform"
+            >
+              Repeat Selection (Random)
+            </button>
+            <Link
+              to="/"
+              className="px-8 py-3 rounded-full bg-white text-black font-bold hover:scale-105 transition-transform"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Flashcards main view
+  // Main flashcards view
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex justify-center mb-6">

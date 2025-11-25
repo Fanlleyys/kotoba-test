@@ -13,13 +13,18 @@ export const DeckDetails: React.FC = () => {
   const [deck, setDeck] = useState<Deck | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // AI Modal State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiTopic, setAiTopic] = useState('');
   const [aiCount, setAiCount] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  // Daily Plan State
+  const [isPlanning, setIsPlanning] = useState(false);
+  const [dailyTarget, setDailyTarget] = useState<number>(7);
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!deckId) return;
@@ -31,7 +36,14 @@ export const DeckDetails: React.FC = () => {
     const foundDeck = decks.find(d => d.id === deckId);
     if (foundDeck) {
       setDeck(foundDeck);
-      setCards(getCards(deckId));
+      const deckCards = getCards(deckId);
+      setCards(deckCards);
+      // Sesuaikan limit maksimum dengan jumlah kartu
+      setDailyTarget(prev => {
+        if (prev < 1) return 1;
+        if (prev > deckCards.length) return deckCards.length || 1;
+        return prev;
+      });
     } else {
       navigate('/decks');
     }
@@ -128,10 +140,55 @@ export const DeckDetails: React.FC = () => {
     );
   }, [cards, searchQuery]);
 
+  const handleTogglePlanning = () => {
+    setIsPlanning(prev => {
+      const next = !prev;
+      if (!next) {
+        // Kalau keluar dari mode planning, reset pilihan
+        setSelectedCardIds([]);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectCard = (cardId: string) => {
+    setSelectedCardIds(prev => {
+      const exists = prev.includes(cardId);
+      if (exists) {
+        return prev.filter(id => id !== cardId);
+      }
+      // Batasi sesuai dailyTarget
+      if (prev.length >= dailyTarget) {
+        // opsional: kasih sedikit feedback
+        window.alert(`You already selected ${dailyTarget} cards for today.`);
+        return prev;
+      }
+      return [...prev, cardId];
+    });
+  };
+
+  const handleDailyTargetChange = (value: string) => {
+    const num = Number(value);
+    if (Number.isNaN(num)) return;
+    const clamped = Math.min(Math.max(num, 1), cards.length || 1);
+    setDailyTarget(clamped);
+    // Kalau jumlah selected melewati limit baru, potong
+    setSelectedCardIds(prev => prev.slice(0, clamped));
+  };
+
+  const handleStartCustomStudy = () => {
+    if (!deckId || selectedCardIds.length === 0) return;
+    const idsParam = encodeURIComponent(selectedCardIds.join(','));
+    navigate(`/study?deckId=${deckId}&mode=flashcards&ids=${idsParam}`);
+  };
+
   if (!deck) return <div className="p-10 text-center">Loading...</div>;
+
+  const selectedCount = selectedCardIds.length;
 
   return (
     <div className="animate-fade-in max-w-5xl mx-auto space-y-6">
+      {/* Header + Actions */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 mb-6 md:mb-8">
         <div className="flex items-center gap-4">
           <Link to="/decks" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
@@ -146,72 +203,132 @@ export const DeckDetails: React.FC = () => {
           </div>
         </div>
         
-        <div className="ml-auto flex gap-2 w-full md:w-auto">
-           <Link 
-             to={`/study?deckId=${deck.id}`}
-             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-violet-600 text-white font-bold transition-all shadow-lg"
-           >
-             <BookOpen size={18} /> Study Deck
-           </Link>
-           <Link 
-             to={`/arcade?deckId=${deck.id}`}
-             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold transition-all"
-           >
-             <Gamepad2 size={18} /> Play Arcade
-           </Link>
+        <div className="ml-auto flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <Link 
+            to={`/study?deckId=${deck.id}`}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-violet-600 text-white font-bold transition-all shadow-lg"
+          >
+            <BookOpen size={18} /> Study Deck
+          </Link>
+          <Link 
+            to={`/arcade?deckId=${deck.id}`}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold transition-all"
+          >
+            <Gamepad2 size={18} /> Play Arcade
+          </Link>
+          <button
+            type="button"
+            onClick={handleTogglePlanning}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
+              isPlanning
+                ? 'bg-emerald-500/10 border-emerald-400 text-emerald-300'
+                : 'bg-black/30 border-white/15 text-gray-200 hover:bg-white/5'
+            }`}
+          >
+            📅 Daily Plan
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-black/20 p-3 md:p-4 rounded-2xl border border-white/5">
-         <div className="relative flex-1 w-full sm:max-w-md">
-           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-           <input 
-             type="text" 
-             placeholder="Search in deck..." 
-             className="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-             value={searchQuery}
-             onChange={e => setSearchQuery(e.target.value)}
-           />
-         </div>
-         <div className="flex gap-2">
+      {/* Search + AI + Daily Plan Controls */}
+      <div className="flex flex-col gap-3 bg-black/20 p-3 md:p-4 rounded-2xl border border-white/5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1 w-full sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search in deck..." 
+              className="w-full bg-black/30 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
             <button 
               onClick={() => setIsAiModalOpen(true)}
               className="flex items-center justify-center gap-2 text-sm bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-300 border border-pink-500/30 px-4 py-2.5 rounded-lg transition-all font-semibold flex-1 sm:flex-none"
             >
               <Sparkles size={16} /> AI Generate
             </button>
-            <Link to="/import" className="flex items-center justify-center gap-2 text-sm text-primary hover:text-violet-300 font-semibold px-4 py-2.5 rounded-lg hover:bg-white/5 border border-white/5 sm:border-transparent flex-1 sm:flex-none">
+            <Link
+              to="/import"
+              className="flex items-center justify-center gap-2 text-sm text-primary hover:text-violet-300 font-semibold px-4 py-2.5 rounded-lg hover:bg-white/5 border border-white/5 sm:border-transparent flex-1 sm:flex-none"
+            >
               <Plus size={16} /> Add Manual
             </Link>
-         </div>
+          </div>
+        </div>
+
+        {isPlanning && (
+          <div className="mt-2 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">Target per hari:</span>
+              <input
+                type="number"
+                min={1}
+                max={cards.length || 1}
+                value={dailyTarget}
+                onChange={e => handleDailyTargetChange(e.target.value)}
+                className="w-20 bg-black/40 border border-white/15 rounded-lg px-2 py-1 text-center text-white text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+              />
+              <span className="text-gray-500">
+                ({selectedCount} / {dailyTarget} selected)
+              </span>
+            </div>
+            <div className="flex gap-2 md:ml-auto">
+              <button
+                type="button"
+                onClick={() => setSelectedCardIds([])}
+                disabled={selectedCount === 0}
+                className="px-3 py-1.5 rounded-lg border border-white/10 text-gray-300 text-xs md:text-sm hover:bg-white/5 disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                Clear selection
+              </button>
+              <button
+                type="button"
+                onClick={handleStartCustomStudy}
+                disabled={selectedCount === 0}
+                className="px-4 py-1.5 rounded-lg bg-emerald-500 text-white text-xs md:text-sm font-semibold hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Start Custom Study
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Cards Table */}
       <div className="glass-panel rounded-2xl overflow-hidden border border-white/10">
         {filteredCards.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center">
-             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                <Search size={24} className="text-gray-500" />
-             </div>
-             <h3 className="text-lg font-semibold text-white mb-2">No cards found</h3>
-             <p className="text-gray-400 max-w-sm mb-6 text-sm">
-               {cards.length === 0 
-                 ? "This deck is empty. Import cards manually or use AI Generation!" 
-                 : "No cards match your search criteria."}
-             </p>
-             {cards.length === 0 && (
-                <button 
-                  onClick={() => setIsAiModalOpen(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl hover:shadow-lg hover:shadow-purple-500/20 transition-all flex items-center gap-2"
-                >
-                  <Sparkles size={18} /> Try AI Generator
-                </button>
-             )}
+            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+              <Search size={24} className="text-gray-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">No cards found</h3>
+            <p className="text-gray-400 max-w-sm mb-6 text-sm">
+              {cards.length === 0 
+                ? "This deck is empty. Import cards manually or use AI Generation!" 
+                : "No cards match your search criteria."}
+            </p>
+            {cards.length === 0 && (
+              <button 
+                onClick={() => setIsAiModalOpen(true)}
+                className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl hover:shadow-lg hover:shadow-purple-500/20 transition-all flex items-center gap-2"
+              >
+                <Sparkles size={18} /> Try AI Generator
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[600px] md:min-w-0">
               <thead>
                 <tr className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-wider text-gray-400">
+                  {isPlanning && (
+                    <th className="p-2 md:p-4 w-10 text-center font-medium">
+                      {/* kolom checkbox (kosong / bisa untuk select all nanti) */}
+                    </th>
+                  )}
                   <th className="p-2 md:p-4 font-medium">Japanese</th>
                   <th className="p-2 md:p-4 font-medium">Romaji</th>
                   <th className="p-2 md:p-4 font-medium">Meaning</th>
@@ -219,25 +336,46 @@ export const DeckDetails: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredCards.map((card) => (
-                  <tr key={card.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="p-2 md:p-4">
-                      <div className="font-jp text-base md:text-lg font-bold text-white">{card.japanese}</div>
-                      {card.example && <div className="text-xs text-gray-500 mt-1 truncate max-w-[150px] md:max-w-[200px]">{card.example}</div>}
-                    </td>
-                    <td className="p-2 md:p-4 text-violet-200 font-medium text-sm md:text-base">{card.romaji}</td>
-                    <td className="p-2 md:p-4 text-gray-300 text-sm md:text-base">{card.indonesia}</td>
-                    <td className="p-2 md:p-4 text-right">
-                      <button 
-                        onClick={() => handleDeleteCard(card.id)}
-                        className="p-2 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        title="Delete Card"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredCards.map((card) => {
+                  const checked = selectedCardIds.includes(card.id);
+                  return (
+                    <tr key={card.id} className="hover:bg-white/5 transition-colors group">
+                      {isPlanning && (
+                        <td className="p-2 md:p-4 text-center align-middle">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => handleToggleSelectCard(card.id)}
+                            className="h-4 w-4 rounded border-white/30 bg-black/40 text-emerald-400 focus:ring-emerald-400 cursor-pointer"
+                          />
+                        </td>
+                      )}
+                      <td className="p-2 md:p-4">
+                        <div className="font-jp text-base md:text-lg font-bold text-white">{card.japanese}</div>
+                        {card.example && (
+                          <div className="text-xs text-gray-500 mt-1 truncate max-w-[150px] md:max-w-[200px]">
+                            {card.example}
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-2 md:p-4 text-violet-200 font-medium text-sm md:text-base">
+                        {card.romaji}
+                      </td>
+                      <td className="p-2 md:p-4 text-gray-300 text-sm md:text-base">
+                        {card.indonesia}
+                      </td>
+                      <td className="p-2 md:p-4 text-right">
+                        <button 
+                          onClick={() => handleDeleteCard(card.id)}
+                          className="p-2 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          title="Delete Card"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -256,14 +394,19 @@ export const DeckDetails: React.FC = () => {
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Sparkles className="text-pink-400" size={20} /> AI Magic Generator
               </h2>
-              <button onClick={() => !isGenerating && setIsAiModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+              <button
+                onClick={() => !isGenerating && setIsAiModalOpen(false)}
+                className="p-2 hover:bg-white/5 rounded-full transition-colors"
+              >
                 <X className="text-gray-400 hover:text-white" size={20} />
               </button>
             </div>
 
             <form onSubmit={handleAiGenerate} className="space-y-5 relative z-10">
               <div>
-                <label className="block text-xs text-gray-400 uppercase font-bold mb-1.5">Topic / Theme</label>
+                <label className="block text-xs text-gray-400 uppercase font-bold mb-1.5">
+                  Topic / Theme
+                </label>
                 <input 
                   autoFocus
                   required 
@@ -277,7 +420,9 @@ export const DeckDetails: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs text-gray-400 uppercase font-bold mb-1.5">Number of Cards: {aiCount}</label>
+                <label className="block text-xs text-gray-400 uppercase font-bold mb-1.5">
+                  Number of Cards: {aiCount}
+                </label>
                 <input 
                   type="range" 
                   min="1" 
