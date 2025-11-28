@@ -32,41 +32,65 @@ export const KataCannonGame: React.FC = () => {
   const engineRef = useRef<GameEngine | null>(null);
   const roundManagerRef = useRef<RoundManager>(new RoundManager([]));
 
-  // Load kartu untuk deck ini
+  // 🔥 FIX 1: Cleanup Engine saat component unmount (PENTING!)
+  useEffect(() => {
+    return () => {
+      if (engineRef.current) {
+        console.log("Cleaning up game engine...");
+        engineRef.current.stop();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const deckId = params.get('deckId');
+    const deckId = params.get('deckId') || undefined;
 
-    const storageCards = getCards(deckId || undefined);
+    const idsParam = params.get('ids'); 
+    const selectedIds = idsParam
+      ? idsParam.split(',').map((id) => id.trim()).filter(Boolean)
+      : [];
 
+    let storageCards = getCards(deckId);
+
+    if (selectedIds.length > 0) {
+      const selectedSet = new Set(selectedIds);
+      storageCards = storageCards.filter((c) => selectedSet.has(c.id));
+    }
+
+    // 🔥 FIX 2: Filter lebih aman. Pastikan field penting tidak kosong/undefined.
     const gameCards: GameCard[] = storageCards
-      .filter((c) => c.japanese && (c.indonesia || c.romaji))
+      .filter((c) => c.japanese && c.romaji && c.indonesia) 
       .map((c) => ({
         id: c.id,
         word: c.japanese,
         romaji: c.romaji || '?',
-        meaning: c.indonesia,
-        srsLevel: c.reviewMeta.repetitions || 0,
+        meaning: c.indonesia || '?',
+        srsLevel: c.reviewMeta?.repetitions || 0,
       }));
 
     if (gameCards.length < 4) {
       setError(
-        'Not enough cards in this deck to play Arcade. Please add at least 4 cards with meanings and romaji.'
+        'Not enough valid cards! Please pick at least 4 cards that have Japanese, Romaji, and Meaning.'
       );
       setLoading(false);
       return;
     }
 
-    roundManagerRef.current.setCards(gameCards);
+    const shuffledGameCards = [...gameCards].sort(() => Math.random() - 0.5);
+
+    roundManagerRef.current.setCards(shuffledGameCards);
     setLoading(false);
   }, [location.search]);
 
+  // ... (Sisa kode ke bawah sama persis, tidak ada error logic)
+  
   const playSound = () => {
-    // isi SFX nanti kalau mau
+    // SFX placeholder
   };
 
   const startGame = () => {
-    if (!engineRef.current) return; // jaga-jaga
+    if (!engineRef.current) return;
 
     setStats({
       score: 0,
@@ -80,7 +104,6 @@ export const KataCannonGame: React.FC = () => {
     });
 
     setGameState('PLAYING');
-
     engineRef.current.start();
     nextRound();
   };
