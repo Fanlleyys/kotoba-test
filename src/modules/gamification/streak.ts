@@ -55,3 +55,31 @@ export const updateStreak = (): UserStats => {
     saveUserStats(newStats);
     return newStats;
 };
+
+// --- XP Logic ---
+export const addXp = (amount: number) => {
+    const stats = getUserStats();
+    let { level, currentXp, nextLevelXp } = stats;
+
+    currentXp += amount;
+
+    // Check Level Up
+    let levelUp = false;
+    while (currentXp >= (nextLevelXp || 100)) {
+        currentXp -= (nextLevelXp || 100);
+        level += 1;
+        levelUp = true;
+        // Difficulty scaling: 100, 120, 144... (+20%)
+        nextLevelXp = Math.floor((nextLevelXp || 100) * 1.2);
+    }
+
+    const updated: UserStats = {
+        ...stats,
+        level,
+        currentXp,
+        nextLevelXp: nextLevelXp || 100,
+    };
+
+    saveUserStats(updated);
+    return { levelUp, newLevel: level, addedXp: amount };
+};

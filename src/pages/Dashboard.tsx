@@ -2,15 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCards } from '../modules/decks/api';
 import { Card } from '../modules/decks/model';
-import { Play, TrendingUp, Clock, Brain, PlusCircle, Layers, Flame } from 'lucide-react';
+import { Play, TrendingUp, Clock, Brain, PlusCircle, Layers, Flame, Zap } from 'lucide-react';
 import { StatsChart } from '../components/StatsChart';
 import { getUserStats } from '../modules/gamification/streak';
+import { UserStats, INITIAL_STATS } from '../modules/gamification/model';
 
 export const Dashboard: React.FC = () => {
   const [cards, setCards] = useState<Card[]>([]);
   const [dueCount, setDueCount] = useState(0);
   const [retentionRate, setRetentionRate] = useState(0);
-  const [streak, setStreak] = useState(0);
+
+  const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
 
   useEffect(() => {
     const allCards = getCards();
@@ -25,8 +27,8 @@ export const Dashboard: React.FC = () => {
     const rate = learnedCards > 0 ? Math.round((retainedCards / learnedCards) * 100) : 0;
     setRetentionRate(rate);
 
-    const stats = getUserStats();
-    setStreak(stats.streak);
+    const userStats = getUserStats();
+    setStats(userStats);
   }, []);
 
   const hasCards = cards.length > 0;
@@ -47,9 +49,9 @@ export const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
 
-        <div className="lg:col-span-2 glass-panel p-6 md:p-8 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[260px] md:min-h-[280px]">
+        <div className="lg:col-span-2 glass-panel p-5 md:p-8 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[260px] md:min-h-[280px]">
           <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
-            <Brain size={140} className="text-primary rotate-12 md:w-[180px] md:h-[180px]" />
+            <Brain size={120} className="text-primary rotate-12 md:w-[180px] md:h-[180px]" />
           </div>
 
           {dueCount > 0 ? (
@@ -136,6 +138,29 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="flex flex-col gap-4 md:gap-4">
+
+          {/* Level Card */}
+          <div className="glass-panel p-5 md:p-6 rounded-3xl flex-1 flex flex-col justify-center relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity">
+              <Zap size={80} className="text-yellow-400 rotate-12" />
+            </div>
+            <div className="flex items-center gap-3 mb-2 text-violet-300 font-semibold uppercase tracking-wider text-[10px] md:text-xs relative z-10">
+              <Zap size={16} className="text-yellow-400" /> Level {stats.level}
+            </div>
+            <div className="relative z-10">
+              <div className="flex justify-between items-end mb-1">
+                <span className="text-2xl font-bold text-white">{stats.currentXp} <span className="text-sm text-gray-400 font-normal">XP</span></span>
+                <span className="text-xs text-gray-400">Next: {stats.nextLevelXp} XP</span>
+              </div>
+              {/* Progress Bar */}
+              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
+                  style={{ width: `${Math.min(100, (stats.currentXp / stats.nextLevelXp) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
           <div className="glass-panel p-5 md:p-6 rounded-3xl flex-1 flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-2 text-violet-300 font-semibold uppercase tracking-wider text-[10px] md:text-xs">
               <TrendingUp size={16} /> Retention Rate
@@ -165,7 +190,7 @@ export const Dashboard: React.FC = () => {
               <Flame size={16} className="text-orange-500" /> Daily Streak
             </div>
             <div className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-              {streak}
+              {stats.streak}
             </div>
             <div className="text-xs md:text-sm text-gray-400 mt-1">
               days in a row

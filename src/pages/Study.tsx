@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getCards, updateCard } from '../modules/decks/api';
 import type { Card } from '../modules/decks/model';
 import { calculateSM2 } from '../services/sm2';
-import { updateStreak } from '../modules/gamification/streak';
+import { updateStreak, addXp } from '../modules/gamification/streak';
 import type { Grade } from '../types';
 import { RefreshCw, Check, Keyboard, Gamepad2, ArrowLeft } from 'lucide-react';
 import { KataCannonGame } from '../game/KataCannonGame';
@@ -128,6 +128,13 @@ export const Study: React.FC = () => {
       // Trigger Streak Update
       updateStreak();
 
+      // XP Logic: 3+ (Pass) = 15 XP, else 2 XP (Consolation)
+      if (grade >= 3) {
+        addXp(15);
+      } else {
+        addXp(2);
+      }
+
       handleNext();
     },
     [currentCard, handleNext, isTransitioning]
@@ -197,6 +204,7 @@ export const Study: React.FC = () => {
       setFeedback('correct');
       // Auto advance after delay
       setTimeout(() => {
+        addXp(20); // Bonus for Typing
         handleGrade(5); // Treat as Easy/Perfect
       }, 1000);
     } else {
@@ -301,7 +309,7 @@ export const Study: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full flex justify-center">
-      <div className="w-full max-w-4xl px-4 md:px-8 pt-20 md:pt-10 pb-6 flex flex-col">
+      <div className="w-full max-w-4xl px-4 md:px-8 pt-20 pb-24 md:pb-6 flex flex-col h-full justify-center">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <Link
@@ -339,7 +347,7 @@ export const Study: React.FC = () => {
         {mode === 'writing' ? (
           <div className="flex-1 flex flex-col items-center max-w-2xl mx-auto w-full">
             {/* Question Card (Fixed Front) */}
-            <div className="w-full bg-[#151520] border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center min-h-[300px] mb-6 shadow-2xl relative overflow-hidden">
+            <div className="w-full bg-[#151520] border border-white/10 rounded-3xl p-6 md:p-12 flex flex-col items-center justify-center min-h-[220px] md:min-h-[300px] mb-4 md:mb-6 shadow-2xl relative overflow-hidden">
 
               {feedback === 'correct' && (
                 <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center animate-fade-in pointer-events-none">
@@ -369,7 +377,7 @@ export const Study: React.FC = () => {
                 value={inputAnswer}
                 onChange={e => setInputAnswer(e.target.value)}
                 placeholder="Type the reading..."
-                className={`w-full bg-[#1a1a24] border-2 rounded-2xl px-6 py-5 text-xl md:text-2xl text-center outline-none transition-all shadow-lg placeholder-gray-600 ${feedback === 'idle' ? 'border-white/10 focus:border-primary focus:ring-4 focus:ring-primary/20 text-white' :
+                className={`w-full bg-[#1a1a24] border-2 rounded-2xl px-5 py-4 text-lg md:text-2xl text-center outline-none transition-all shadow-lg placeholder-gray-600 ${feedback === 'idle' ? 'border-white/10 focus:border-primary focus:ring-4 focus:ring-primary/20 text-white' :
                   feedback === 'correct' ? 'border-green-500 bg-green-500/10 text-green-400' :
                     'border-red-500 bg-red-500/10 text-red-400'
                   }`}

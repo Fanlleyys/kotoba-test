@@ -157,16 +157,16 @@ export const Decks: React.FC = () => {
             </h1>
             <p className="text-gray-400 text-sm md:text-base">Manage and organize your learning collections</p>
           </div>
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <button
               onClick={() => setIsCustomStudyOpen(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#1a1a24] hover:bg-[#252532] border border-white/10 text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#1a1a24] hover:bg-[#252532] border border-white/10 text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 whitespace-nowrap"
             >
               <Filter size={20} /> Custom Study
             </button>
             <button
               onClick={() => { setEditingDeck(null); setIsFormOpen(true); }}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-violet-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all active:scale-95"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-violet-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all active:scale-95 whitespace-nowrap"
             >
               <Plus size={20} /> Create Deck
             </button>
@@ -252,7 +252,7 @@ export const Decks: React.FC = () => {
           {/* Placeholder New Deck */}
           <button
             onClick={() => { setEditingDeck(null); setIsFormOpen(true); }}
-            className="rounded-2xl border-2 border-dashed border-white/10 hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center p-6 min-h-[280px] group transition-all animate-fade-in-up"
+            className="rounded-2xl border-2 border-dashed border-white/10 hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center p-5 min-h-[200px] md:min-h-[280px] group transition-all animate-fade-in-up"
           >
             <div className="w-16 h-16 rounded-full bg-white/5 group-hover:bg-primary/20 flex items-center justify-center mb-4 transition-colors">
               <Plus size={32} className="text-gray-500 group-hover:text-primary transition-colors" />
@@ -271,65 +271,69 @@ export const Decks: React.FC = () => {
       </div>
 
       {/* 🔥 FIX: BOTTOM SHEET (DRAGGABLE) 🔥 */}
-      {isFormOpen && (
-        <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-center sm:items-center">
+      {
+        isFormOpen && (
+          <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-center sm:items-center">
 
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
-            onClick={() => setIsFormOpen(false)}
-          />
-
-          {/* Modal Panel */}
-          <div
-            className="relative w-full max-w-md bg-[#1a1a24] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] transition-transform duration-200 ease-out"
-            style={{
-              transform: `translateY(${Math.max(0, sheetY)}px)`,
-              marginBottom: 0
-            }}
-          >
-            {/* DRAG HANDLE - AREA SENTUH DIPERBESAR */}
+            {/* Backdrop */}
             <div
-              className="w-full flex justify-center pt-5 pb-3 cursor-grab active:cursor-grabbing sm:hidden bg-[#1a1a24] z-20 touch-none absolute top-0 left-0 right-0 h-10"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
+              onClick={() => setIsFormOpen(false)}
+            />
+
+            {/* Modal Panel */}
+            <div
+              className="relative w-full max-w-md bg-[#1a1a24] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] transition-transform duration-200 ease-out"
+              style={{
+                transform: `translateY(${Math.max(0, sheetY)}px)`,
+                marginBottom: 0
+              }}
             >
-              {/* Pill Visual */}
-              <div className="w-16 h-1.5 bg-white/20 rounded-full" />
-            </div>
+              {/* DRAG HANDLE - AREA SENTUH DIPERBESAR */}
+              <div
+                className="w-full flex justify-center pt-5 pb-3 cursor-grab active:cursor-grabbing sm:hidden bg-[#1a1a24] z-20 touch-none absolute top-0 left-0 right-0 h-10"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {/* Pill Visual */}
+                <div className="w-16 h-1.5 bg-white/20 rounded-full" />
+              </div>
 
-            {/* Header */}
-            <div className="flex justify-between items-center px-6 py-3 pt-10 sm:pt-3 border-b border-white/5 bg-[#1a1a24]">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                {editingDeck ? <Edit2 size={20} className="text-primary" /> : <Plus size={20} className="text-primary" />}
-                {editingDeck ? 'Edit Deck' : 'New Deck'}
-              </h2>
-              <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">
-                <X size={20} />
-              </button>
-            </div>
+              {/* Header */}
+              <div className="flex justify-between items-center px-6 py-3 pt-10 sm:pt-3 border-b border-white/5 bg-[#1a1a24]">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  {editingDeck ? <Edit2 size={20} className="text-primary" /> : <Plus size={20} className="text-primary" />}
+                  {editingDeck ? 'Edit Deck' : 'New Deck'}
+                </h2>
+                <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
 
-            {/* Content Scrollable */}
-            <div className="p-6 overflow-y-auto flex-1 overscroll-contain">
-              <DeckForm
-                initialData={editingDeck || undefined}
-                onSubmit={handleSaveDeck}
-                onCancel={() => setIsFormOpen(false)}
-              />
+              {/* Content Scrollable */}
+              <div className="p-4 md:p-6 overflow-y-auto flex-1 overscroll-contain">
+                <DeckForm
+                  initialData={editingDeck || undefined}
+                  onSubmit={handleSaveDeck}
+                  onCancel={() => setIsFormOpen(false)}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Custom Study Modal */}
-      {isCustomStudyOpen && (
-        <CustomStudyModal
-          decks={decks}
-          allTags={allTags}
-          onClose={() => setIsCustomStudyOpen(false)}
-        />
-      )}
+      {
+        isCustomStudyOpen && (
+          <CustomStudyModal
+            decks={decks}
+            allTags={allTags}
+            onClose={() => setIsCustomStudyOpen(false)}
+          />
+        )
+      }
     </>
   );
 };
@@ -452,32 +456,32 @@ const CustomStudyModal: React.FC<{
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-          {/* Sidebar: Tag Selection */}
-          <div className="w-full md:w-1/3 border-r border-white/5 bg-[#151520] flex flex-col">
-            <div className="p-4 border-b border-white/5">
+          {/* Sidebar: Tag Selection (Responsive: Horizontal scroll on mobile, Vertical on desktop) */}
+          <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-white/5 bg-[#151520] flex flex-col max-h-[160px] md:max-h-none shrink-0">
+            <div className="p-3 md:p-4 border-b border-white/5">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Tag</h3>
             </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 overflow-x-auto md:overflow-y-auto p-2 flex md:block gap-2 space-y-0 md:space-y-1 scrollbar-hide">
               {allTags.map(tag => (
                 <button
                   key={tag}
                   onClick={() => { setSelectedTag(tag); setSelectedDecks(new Set()); }}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${selectedTag === tag
+                  className={`flex-shrink-0 w-auto md:w-full text-left px-4 py-2 md:py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedTag === tag
                     ? 'bg-primary/20 text-primary border border-primary/20'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                    : 'bg-white/5 md:bg-transparent text-gray-400 hover:bg-white/10 hover:text-white'
                     }`}
                 >
                   #{tag}
                 </button>
               ))}
               {allTags.length === 0 && (
-                <div className="text-center p-4 text-gray-500 text-sm">No tags found. Add tags to your decks first.</div>
+                <div className="text-center p-4 text-gray-500 text-sm w-full">No tags found.</div>
               )}
             </div>
           </div>
 
           {/* Main Area: Deck Selection */}
-          <div className="flex-1 flex flex-col bg-[#1a1a24] min-h-[300px]">
+          <div className="flex-1 flex flex-col bg-[#1a1a24] min-h-0">
             {selectedTag ? (
               <>
                 <div className="p-4 border-b border-white/5 flex justify-between items-center">
