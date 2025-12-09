@@ -16,8 +16,8 @@ export default {
           200: 'rgba(255, 255, 255, 0.1)',
           300: 'rgba(255, 255, 255, 0.2)',
         },
-        primary: '#7c3aed', // Violet 600
-        secondary: '#c084fc', // Violet 400
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
         dark: '#0f0f16',
       },
       animation: {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutGrid, BookOpen, Upload, Zap, Layers, Gamepad2 } from 'lucide-react';
+import { ThemePicker } from './ThemePicker';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -24,22 +25,26 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-1 sm:gap-2">
-            <NavLink to="/" active={isActive('/')} icon={<LayoutGrid size={18} />}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/study" active={isActive('/study')} icon={<BookOpen size={18} />}>
-              Study
-            </NavLink>
-            <NavLink to="/decks" active={isActive('/decks')} icon={<Layers size={18} />}>
-              Decks
-            </NavLink>
-            <NavLink to="/arcade" active={isActive('/arcade')} icon={<Gamepad2 size={18} />}>
-              Arcade
-            </NavLink>
-            <NavLink to="/import" active={isActive('/import')} icon={<Upload size={18} />}>
-              Import
-            </NavLink>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden md:flex items-center gap-1 sm:gap-2">
+              <NavLink to="/" active={isActive('/')} icon={<LayoutGrid size={18} />}>
+                Dashboard
+              </NavLink>
+              <NavLink to="/study" active={isActive('/study')} icon={<BookOpen size={18} />}>
+                Study
+              </NavLink>
+              <NavLink to="/decks" active={isActive('/decks')} icon={<Layers size={18} />}>
+                Decks
+              </NavLink>
+              <NavLink to="/arcade" active={isActive('/arcade')} icon={<Gamepad2 size={18} />}>
+                Arcade
+              </NavLink>
+              <NavLink to="/import" active={isActive('/import')} icon={<Upload size={18} />}>
+                Import
+              </NavLink>
+            </div>
+
+            <ThemePicker />
           </div>
         </div>
       </nav>
