@@ -53,9 +53,9 @@ export const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
 
-        <div className="lg:col-span-2 glass-panel p-5 md:p-8 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[260px] md:min-h-[280px]">
-          <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
-            <Brain size={120} className="text-primary rotate-12 md:w-[180px] md:h-[180px]" />
+        <div className="lg:col-span-2 glass-panel p-4 md:p-8 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[240px] md:min-h-[280px]">
+          <div className="absolute top-0 right-0 p-6 opacity-20 pointer-events-none">
+            <Brain size={100} className="text-primary rotate-12 md:w-[180px] md:h-[180px]" />
           </div>
 
           {dueCount > 0 ? (

@@ -4,6 +4,8 @@ import App from './App';
 import './index.css';
 import { ThemeProvider } from './context/ThemeContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LanguageProvider } from './context/LanguageContext';
+import { StudyProvider } from './context/StudyContext';
 
 const rootElement = document.getElementById('root');
 
@@ -16,9 +18,13 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
+      <LanguageProvider>
+        <ThemeProvider>
+          <StudyProvider>
+            <App />
+          </StudyProvider>
+        </ThemeProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

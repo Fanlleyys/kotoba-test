@@ -1,8 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, BookOpen, Upload, Zap, Layers, Gamepad2 } from 'lucide-react';
-import { ThemePicker } from './ui/ThemePicker';
-import ClickSpark from './ui/ClickSpark';
+import { LayoutGrid, BookOpen, Upload, Zap, Layers, Gamepad2, Settings as SettingsIcon } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -11,65 +9,70 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="min-h-screen relative overflow-hidden text-gray-100 font-sans">
-      <ClickSpark sparkColor="rgba(168, 85, 247, 0.5)" sparkSize={12} sparkRadius={25} sparkCount={10}>
-        {/* Animated Background Blobs - Optimized for Mobile */}
-        <div className="fixed top-[-10%] left-[-10%] w-64 h-64 md:w-96 md:h-96 bg-primary rounded-full liquid-blob opacity-20 md:opacity-30 blur-[60px] md:blur-[120px]"></div>
-        <div className="fixed bottom-[-10%] right-[-10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-secondary rounded-full liquid-blob opacity-15 md:opacity-20 blur-[60px] md:blur-[120px]" style={{ animationDelay: '2s' }}></div>
+      {/* Animated Background Blobs - Optimized for Mobile */}
+      <div className="fixed top-[-10%] left-[-10%] w-64 h-64 md:w-96 md:h-96 bg-primary rounded-full liquid-blob opacity-20 md:opacity-30 blur-[60px] md:blur-[120px]"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-secondary rounded-full liquid-blob opacity-15 md:opacity-20 blur-[60px] md:blur-[120px]" style={{ animationDelay: '2s' }}></div>
 
-        <nav className="fixed top-0 w-full z-50 border-b border-white/10 bg-black/20 backdrop-blur-md">
-          <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-purple-500/20">
-                <Zap size={18} className="text-white" />
-              </div>
-              <span className="font-bold text-xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-                KataSensei
-              </span>
+      <nav className="fixed top-0 w-full z-50 border-b border-white/10 bg-black/20 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-purple-500/20">
+              <Zap size={18} className="text-white" />
             </div>
-
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="hidden md:flex items-center gap-1 sm:gap-2">
-                <NavLink to="/" active={isActive('/')} icon={<LayoutGrid size={18} />}>
-                  Dashboard
-                </NavLink>
-                <NavLink to="/study" active={isActive('/study')} icon={<BookOpen size={18} />}>
-                  Study
-                </NavLink>
-                <NavLink to="/decks" active={isActive('/decks')} icon={<Layers size={18} />}>
-                  Decks
-                </NavLink>
-                <NavLink to="/arcade" active={isActive('/arcade')} icon={<Gamepad2 size={18} />}>
-                  Arcade
-                </NavLink>
-                <NavLink to="/import" active={isActive('/import')} icon={<Upload size={18} />}>
-                  Import
-                </NavLink>
-              </div>
-
-              <ThemePicker />
-            </div>
+            <span className="font-bold text-xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+              KataSensei
+            </span>
           </div>
-        </nav>
 
-        {/* Mobile Bottom Navigation */}
-        <nav className="md:hidden fixed bottom-0 w-full z-50 bg-[#1a1a24]/90 backdrop-blur-md border-t border-white/10 safe-area-bottom">
-          <div className="flex justify-around items-center h-16 px-2">
-            <MobileNavLink to="/" active={isActive('/')} icon={<LayoutGrid size={20} />} label="Home" />
-            <MobileNavLink to="/decks" active={isActive('/decks')} icon={<Layers size={20} />} label="Decks" />
-            <div className="relative -top-5">
-              <Link to="/study" className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/40 border-4 border-[#13131a]">
-                <BookOpen size={24} />
-              </Link>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden md:flex items-center gap-1 sm:gap-2">
+              <NavLink to="/" active={isActive('/')} icon={<LayoutGrid size={18} />}>
+                Dashboard
+              </NavLink>
+              <NavLink to="/study" active={isActive('/study')} icon={<BookOpen size={18} />}>
+                Study
+              </NavLink>
+              <NavLink to="/decks" active={isActive('/decks')} icon={<Layers size={18} />}>
+                Decks
+              </NavLink>
+              <NavLink to="/arcade" active={isActive('/arcade')} icon={<Gamepad2 size={18} />}>
+                Arcade
+              </NavLink>
+              <NavLink to="/import" active={isActive('/import')} icon={<Upload size={18} />}>
+                Import
+              </NavLink>
             </div>
-            <MobileNavLink to="/arcade" active={isActive('/arcade')} icon={<Gamepad2 size={20} />} label="Arcade" />
-            <MobileNavLink to="/import" active={isActive('/import')} icon={<Upload size={20} />} label="Import" />
-          </div>
-        </nav>
 
-        <main className="pt-24 pb-20 md:pb-12 px-4 max-w-6xl mx-auto relative z-10">
-          {children}
-        </main>
-      </ClickSpark>
+            {/* Settings Icon - Top Right (Always Visible) */}
+            <Link
+              to="/settings"
+              className={`p-2 rounded-full transition-all ${isActive('/settings') ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+              aria-label="Settings"
+            >
+              <SettingsIcon size={20} />
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 w-full z-50 bg-[#1a1a24]/90 backdrop-blur-md border-t border-white/10 safe-area-bottom">
+        <div className="flex justify-around items-center h-16 px-2">
+          <MobileNavLink to="/" active={isActive('/')} icon={<LayoutGrid size={20} />} label="Home" />
+          <MobileNavLink to="/decks" active={isActive('/decks')} icon={<Layers size={20} />} label="Decks" />
+          <div className="relative -top-5">
+            <Link to="/study" className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/40 border-4 border-[#13131a]">
+              <BookOpen size={24} />
+            </Link>
+          </div>
+          <MobileNavLink to="/arcade" active={isActive('/arcade')} icon={<Gamepad2 size={20} />} label="Arcade" />
+          <MobileNavLink to="/import" active={isActive('/import')} icon={<Upload size={20} />} label="Import" />
+        </div>
+      </nav>
+
+      <main className="pt-24 pb-20 md:pb-12 px-4 max-w-6xl mx-auto relative z-10">
+        {children}
+      </main>
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { updateStreak, addXp } from '../modules/gamification/streak';
 import type { Grade } from '../types';
 import { RefreshCw, Check, Keyboard, Gamepad2, ArrowLeft } from 'lucide-react';
 import { KataCannonGame } from '../game/KataCannonGame';
+import { useStudySettings } from '../context/StudyContext';
 
 // --- HELPER FUNCTIONS ---
 
@@ -29,6 +30,7 @@ const hasKanji = (text: string) => {
 export const Study: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showFurigana, reverseCards } = useStudySettings();
   const params = new URLSearchParams(location.search);
 
   const deckId = params.get('deckId') || undefined;
@@ -56,7 +58,6 @@ export const Study: React.FC = () => {
   // ---- Load queue ----
   useEffect(() => {
     setIsLoading(true);
-    setIsFinished(false);
     setIsFinished(false);
     setIsFlipped(false);
     // Reset typing state
@@ -179,8 +180,6 @@ export const Study: React.FC = () => {
     setCurrentIndex(0);
     setIsFlipped(false);
     setIsFinished(false);
-    setIsTransitioning(false);
-    setDisableFlipAnimation(false);
     setIsTransitioning(false);
     setDisableFlipAnimation(false);
     // Reset typing
@@ -306,7 +305,6 @@ export const Study: React.FC = () => {
   }
 
   const containsKanji = hasKanji(currentCard.japanese || '');
-  const furiganaText = currentCard.furigana;
 
   return (
     <div className="min-h-screen w-full flex justify-center">
@@ -348,25 +346,25 @@ export const Study: React.FC = () => {
         {mode === 'writing' ? (
           <div className="flex-1 flex flex-col items-center max-w-2xl mx-auto w-full">
             {/* Question Card (Fixed Front) */}
-            <div className="w-full bg-[#151520] border border-white/10 rounded-3xl p-6 md:p-12 flex flex-col items-center justify-center min-h-[220px] md:min-h-[300px] mb-4 md:mb-6 shadow-2xl relative overflow-hidden">
+            <div className="w-full bg-[#151520] border border-white/10 rounded-3xl p-5 md:p-12 flex flex-col items-center justify-center min-h-[200px] md:min-h-[300px] mb-4 md:mb-6 shadow-2xl relative overflow-hidden">
 
               {feedback === 'correct' && (
                 <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center animate-fade-in pointer-events-none">
-                  <Check size={100} className="text-green-500 opacity-50" />
+                  <Check size={80} className="text-green-500 opacity-50 md:w-[100px] md:h-[100px]" />
                 </div>
               )}
 
-              <div className="text-xs uppercase tracking-[0.2em] text-purple-400 font-bold mb-6">
+              <div className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-purple-400 font-bold mb-4 md:mb-6">
                 Translate to Japanese (Romaji)
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold text-center text-white mb-4 leading-tight">
+              <h1 className="text-3xl md:text-5xl font-bold text-center text-white mb-4 leading-tight">
                 {currentCard.indonesia}
               </h1>
 
               {/* Hint / Example (Optional) */}
               {currentCard.example && (
-                <p className="text-gray-500 text-sm mt-4 italic max-w-md text-center">"{currentCard.example}"</p>
+                <p className="text-gray-500 text-xs md:text-sm mt-4 italic max-w-md text-center">"{currentCard.example}"</p>
               )}
             </div>
 
@@ -377,7 +375,7 @@ export const Study: React.FC = () => {
                 type="text"
                 value={inputAnswer}
                 onChange={e => setInputAnswer(e.target.value)}
-                placeholder="Type the reading..."
+                placeholder="Type..."
                 className={`w-full bg-[#1a1a24] border-2 rounded-2xl px-5 py-4 text-lg md:text-2xl text-center outline-none transition-all shadow-lg placeholder-gray-600 ${feedback === 'idle' ? 'border-white/10 focus:border-primary focus:ring-4 focus:ring-primary/20 text-white' :
                   feedback === 'correct' ? 'border-green-500 bg-green-500/10 text-green-400' :
                     'border-red-500 bg-red-500/10 text-red-400'
@@ -391,35 +389,35 @@ export const Study: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!inputAnswer.trim()}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-primary hover:text-white p-3 rounded-xl text-gray-400 transition-all disabled:opacity-0 disabled:pointer-events-none"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-primary hover:text-white p-2 md:p-3 rounded-xl text-gray-400 transition-all disabled:opacity-0 disabled:pointer-events-none"
                 >
-                  <Check size={24} />
+                  <Check size={20} className="md:w-6 md:h-6" />
                 </button>
               )}
 
               {/* Incorrect State: Show Answer & Continue */}
               {feedback === 'incorrect' && (
-                <div className="mt-6 animate-fade-in-up w-full">
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 mb-4 text-center">
-                    <p className="text-red-300 text-xs uppercase font-bold mb-2">Correct Answer</p>
-                    <p className="text-2xl md:text-3xl font-bold text-white mb-1">{currentCard.japanese || '?'}</p>
-                    <p className="text-lg text-red-200 font-mono">{currentCard.romaji}</p>
+                <div className="mt-4 md:mt-6 animate-fade-in-up w-full">
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 md:p-6 mb-4 text-center">
+                    <p className="text-red-300 text-[10px] md:text-xs uppercase font-bold mb-2">Correct Answer</p>
+                    <p className="text-xl md:text-3xl font-bold text-white mb-1">{currentCard.japanese || '?'}</p>
+                    <p className="text-base md:text-lg text-red-200 font-mono">{currentCard.romaji}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleGrade(1)} // Mark as 'Again'
-                    className="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-500/20 transition-all"
+                    className="w-full py-3 md:py-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-500/20 transition-all text-sm md:text-base"
                   >
-                    Continue (Review Later)
+                    Continue
                   </button>
                 </div>
               )}
             </form>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center mb-6">
+          <div className="flex-1 flex items-center justify-center mb-4 md:mb-6">
             <div
-              className="perspective-1000 w-full h-[45vh] md:h-[420px] cursor-pointer group relative"
+              className="perspective-1000 w-full h-[40vh] md:h-[420px] cursor-pointer group relative"
               onClick={() => !isFlipped && setIsFlipped(true)}
             >
               <div
@@ -431,51 +429,81 @@ export const Study: React.FC = () => {
                     : 'transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)',
                 ].join(' ')}
               >
-                {/* --- FRONT SIDE (JAPANESE) --- */}
+                {/* --- FRONT SIDE --- */}
                 <div className="absolute w-full h-full backface-hidden glass-panel rounded-[1.75rem] flex flex-col items-center justify-center px-4 py-6 md:px-8 md:py-10 border-t border-white/20 shadow-2xl bg-[#151520]/80 backdrop-blur-xl">
                   <div className="absolute top-4 md:top-6 text-[10px] md:text-xs uppercase tracking-[0.2em] text-gray-500 font-bold">
-                    Japanese
+                    {reverseCards ? 'Meaning' : 'Japanese'}
                   </div>
 
-                  {/* FURIGANA DISPLAY */}
-                  {containsKanji ? (
-                    <div className="text-lg md:text-2xl text-pink-300 font-medium mb-1 tracking-wider opacity-90 font-jp">
-                      {furiganaText || '...'}
-                    </div>
+                  {reverseCards ? (
+                    // Reverse Mode (Front = Meaning)
+                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-center text-white drop-shadow-[0_0_20px_rgba(168,85,247,0.4)] mb-2 leading-tight">
+                      {currentCard.indonesia}
+                    </h1>
                   ) : (
-                    <div className="h-5 md:h-7 mb-1" />
+                    // Normal Mode (Front = Japanese)
+                    <>
+                      {/* FURIGANA DISPLAY */}
+                      {(showFurigana && (containsKanji || currentCard.reading)) ? (
+                        <div className="text-base md:text-2xl text-pink-300 font-medium mb-1 tracking-wider opacity-90 font-jp">
+                          {currentCard.reading || (containsKanji ? '...' : '')}
+                        </div>
+                      ) : (
+                        <div className="h-4 md:h-7 mb-1" />
+                      )}
+
+                      {/* Teks Utama */}
+                      <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-jp text-center text-white drop-shadow-[0_0_20px_rgba(168,85,247,0.4)] mb-2 leading-tight">
+                        {currentCard.japanese || '?'}
+                      </h1>
+                    </>
                   )}
 
-                  {/* Teks Utama */}
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-jp text-center text-white drop-shadow-[0_0_20px_rgba(168,85,247,0.4)] mb-2 leading-tight">
-                    {currentCard.japanese || '?'}
-                  </h1>
-
-                  <div className="absolute bottom-4 md:bottom-6 text-gray-600 text-[11px] md:text-sm flex items-center gap-2 opacity-70">
+                  <div className="absolute bottom-4 md:bottom-6 text-gray-600 text-[10px] md:text-sm flex items-center gap-2 opacity-70">
                     <Keyboard size={12} className="md:w-4 md:h-4" /> Press Space to Flip
                   </div>
                 </div>
 
-                {/* --- BACK SIDE (MEANING) --- */}
+                {/* --- BACK SIDE --- */}
                 <div className="absolute w-full h-full backface-hidden rotate-y-180 glass-panel rounded-[1.75rem] flex flex-col items-center justify-center px-4 py-6 md:px-8 md:py-10 border-t border-purple-500/30 shadow-[0_0_50px_rgba(168,85,247,0.15)] bg-[#0f0f16]/95">
                   <div className="absolute top-4 md:top-6 text-[10px] md:text-xs uppercase tracking-[0.2em] text-purple-400 font-bold">
-                    Meaning
+                    {reverseCards ? 'Japanese' : 'Meaning'}
                   </div>
 
-                  <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center mb-4 md:mb-6 text-white leading-tight">
-                    {currentCard.indonesia}
-                  </h3>
+                  {reverseCards ? (
+                    // Reverse Mode (Back = Japanese)
+                    <>
+                      {(showFurigana && (containsKanji || currentCard.reading)) && (
+                        <div className="text-base md:text-2xl text-pink-300 font-medium mb-1 tracking-wider opacity-90 font-jp">
+                          {currentCard.reading || '...'}
+                        </div>
+                      )}
+                      <h3 className="text-3xl md:text-6xl font-bold font-jp text-center mb-2 md:mb-6 text-white leading-tight">
+                        {currentCard.japanese || '?'}
+                      </h3>
+                      <div className="text-gray-500 font-mono mb-4 md:mb-6 text-sm md:text-lg">
+                        {currentCard.romaji}
+                      </div>
+                    </>
+                  ) : (
+                    // Normal Mode (Back = Meaning)
+                    <>
+                      <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center mb-2 md:mb-6 text-white leading-tight">
+                        {currentCard.indonesia}
+                      </h3>
 
-                  <div className="text-gray-500 font-mono mb-4 md:mb-6 text-base md:text-lg">
-                    {furiganaText || currentCard.romaji}
-                  </div>
+                      <div className="text-gray-500 font-mono mb-4 md:mb-6 text-sm md:text-lg">
+                        {currentCard.romaji}
+                      </div>
+                    </>
+                  )}
 
                   {currentCard.example && (
                     <div className="bg-white/5 p-3 md:p-5 rounded-2xl w-full max-w-lg text-center border border-white/5">
-                      <p className="text-sm md:text-lg text-purple-200 font-jp mb-1">
+                      <p className="text-xs md:text-lg text-purple-200 font-jp mb-1">
                         {currentCard.example}
                       </p>
-                      <p className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider font-bold">
+                      <p className="text-[9px] md:text-xs text-gray-500 uppercase tracking-wider font-bold">
                         Example Sentence
                       </p>
                     </div>
@@ -497,36 +525,36 @@ export const Study: React.FC = () => {
           <div className="grid grid-cols-4 gap-2 md:gap-3 max-w-2xl mx-auto">
             <button
               onClick={() => handleGrade(1)}
-              className="group py-3 md:py-4 rounded-2xl bg-[#1a1a24] border border-red-500/20 hover:bg-red-500/10 hover:border-red-500/50 text-red-400 transition-all flex flex-col items-center gap-1 active:scale-95 text-xs md:text-sm"
+              className="group py-2 md:py-4 rounded-xl md:rounded-2xl bg-[#1a1a24] border border-red-500/20 hover:bg-red-500/10 hover:border-red-500/50 text-red-400 transition-all flex flex-col items-center gap-0.5 md:gap-1 active:scale-95"
             >
-              <span className="font-bold">Again</span>
+              <span className="font-bold text-xs md:text-sm">Again</span>
               <span className="text-[9px] md:text-[10px] opacity-50 group-hover:opacity-100 uppercase font-mono">
                 1m
               </span>
             </button>
             <button
               onClick={() => handleGrade(2)}
-              className="group py-3 md:py-4 rounded-2xl bg-[#1a1a24] border border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/50 text-orange-400 transition-all flex flex-col items-center gap-1 active:scale-95 text-xs md:text-sm"
+              className="group py-2 md:py-4 rounded-xl md:rounded-2xl bg-[#1a1a24] border border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/50 text-orange-400 transition-all flex flex-col items-center gap-0.5 md:gap-1 active:scale-95"
             >
-              <span className="font-bold">Hard</span>
+              <span className="font-bold text-xs md:text-sm">Hard</span>
               <span className="text-[9px] md:text-[10px] opacity-50 group-hover:opacity-100 uppercase font-mono">
                 10m
               </span>
             </button>
             <button
               onClick={() => handleGrade(3)}
-              className="group py-3 md:py-4 rounded-2xl bg-[#1a1a24] border border-blue-500/20 hover:bg-blue-500/10 hover:border-blue-500/50 text-blue-400 transition-all flex flex-col items-center gap-1 active:scale-95 text-xs md:text-sm"
+              className="group py-2 md:py-4 rounded-xl md:rounded-2xl bg-[#1a1a24] border border-blue-500/20 hover:bg-blue-500/10 hover:border-blue-500/50 text-blue-400 transition-all flex flex-col items-center gap-0.5 md:gap-1 active:scale-95"
             >
-              <span className="font-bold">Good</span>
+              <span className="font-bold text-xs md:text-sm">Good</span>
               <span className="text-[9px] md:text-[10px] opacity-50 group-hover:opacity-100 uppercase font-mono">
                 1d
               </span>
             </button>
             <button
               onClick={() => handleGrade(5)}
-              className="group py-3 md:py-4 rounded-2xl bg-[#1a1a24] border border-emerald-500/20 hover:bg-emerald-500/10 hover:border-emerald-500/50 text-emerald-400 transition-all flex flex-col items-center gap-1 active:scale-95 text-xs md:text-sm"
+              className="group py-2 md:py-4 rounded-xl md:rounded-2xl bg-[#1a1a24] border border-emerald-500/20 hover:bg-emerald-500/10 hover:border-emerald-500/50 text-emerald-400 transition-all flex flex-col items-center gap-0.5 md:gap-1 active:scale-95"
             >
-              <span className="font-bold">Easy</span>
+              <span className="font-bold text-xs md:text-sm">Easy</span>
               <span className="text-[9px] md:text-[10px] opacity-50 group-hover:opacity-100 uppercase font-mono">
                 4d
               </span>
@@ -541,6 +569,6 @@ export const Study: React.FC = () => {
           .rotate-y-180 { transform: rotateY(180deg); }
         `}</style>
       </div>
-    </div>
+    </div >
   );
 };

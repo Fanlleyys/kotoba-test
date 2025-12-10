@@ -61,8 +61,35 @@ body {
   /* #f59e0b */
   --color-secondary: 251 191 36;
   /* #fbbf24 */
-  --color-bg: 15 10 2;
   /* Dark Amber Tint */
+}
+
+/* --- PREMIUM THEMES --- */
+.theme-moonlight {
+  --color-primary: 99 102 241;
+  /* Indigo-500 */
+  --color-secondary: 167 139 250;
+  /* Violet-400 */
+  --color-bg: 15 23 42;
+  /* Slate-900 */
+}
+
+.theme-sunset {
+  --color-primary: 244 63 94;
+  /* Rose-500 */
+  --color-secondary: 251 146 60;
+  /* Orange-400 */
+  --color-bg: 28 10 10;
+  /* Dark Rose Tint */
+}
+
+.theme-obsidian {
+  --color-primary: 255 255 255;
+  /* White */
+  --color-secondary: 148 163 184;
+  /* Slate-400 */
+  --color-bg: 0 0 0;
+  /* Pure Black */
 }
 
 

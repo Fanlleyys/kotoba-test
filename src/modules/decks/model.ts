@@ -13,7 +13,8 @@ export interface Card {
   indonesia: string;
   example: string;
   // NEW: optional furigana (hiragana / katakana reading)
-  furigana?: string;
+  furigana?: string; // Legacy field
+  reading?: string; // Unified reading field
   tags: string[];
   createdAt: string;
   reviewMeta: ReviewMeta;

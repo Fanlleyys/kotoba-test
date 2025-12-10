@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type Theme = 'violet' | 'sakura' | 'cyberpunk' | 'samurai' | 'matcha' | 'golden';
+export type Theme = 'violet' | 'sakura' | 'cyberpunk' | 'samurai' | 'matcha' | 'golden' | 'moonlight' | 'sunset' | 'obsidian';
 
 interface ThemeContextType {
     theme: Theme;
@@ -16,6 +16,9 @@ export const THEMES: { id: Theme; name: string; primary: string; secondary: stri
     { id: 'samurai', name: 'Samurai', primary: '#ef4444', secondary: '#f87171' },
     { id: 'matcha', name: 'Matcha', primary: '#10b981', secondary: '#34d399' },
     { id: 'golden', name: 'Golden', primary: '#f59e0b', secondary: '#fbbf24' },
+    { id: 'moonlight', name: 'Moonlight', primary: '#6366f1', secondary: '#a78bfa' },
+    { id: 'sunset', name: 'Sunset', primary: '#f43f5e', secondary: '#fb923c' },
+    { id: 'obsidian', name: 'Obsidian', primary: '#ffffff', secondary: '#94a3b8' },
 ];
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

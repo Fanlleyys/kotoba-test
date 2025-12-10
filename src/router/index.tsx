@@ -11,6 +11,7 @@ import { Import } from '../modules/decks/Import';
 import { KataCannonGame } from '../game/KataCannonGame';
 import { TestMode } from '../pages/TestMode';
 import { MatchGame } from '../pages/MatchGame';
+import { Settings } from '../pages/Settings';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -41,6 +42,7 @@ export const AppRouter: React.FC = () => {
       {/* New games */}
       <Route path="/test" element={<TestMode />} />
       <Route path="/match" element={<MatchGame />} />
+      <Route path="/settings" element={<Settings />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
