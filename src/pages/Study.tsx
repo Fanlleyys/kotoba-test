@@ -51,7 +51,7 @@ export const Study: React.FC = () => {
   // Typing Mode State
   const [inputAnswer, setInputAnswer] = useState('');
   const [feedback, setFeedback] = useState<'idle' | 'correct' | 'incorrect'>('idle');
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [_showAnswer, setShowAnswer] = useState(false);
 
   // ---- Load queue ----
   useEffect(() => {
@@ -97,17 +97,14 @@ export const Study: React.FC = () => {
     if (queue.length === 0) return;
     if (currentIndex < queue.length - 1) {
       setCurrentIndex((prev) => prev + 1);
-      if (currentIndex < queue.length - 1) {
-        setCurrentIndex((prev) => prev + 1);
-        setIsFlipped(false);
+      setIsFlipped(false);
 
-        // Reset typing state
-        setInputAnswer('');
-        setFeedback('idle');
-        setShowAnswer(false);
+      // Reset typing state
+      setInputAnswer('');
+      setFeedback('idle');
+      setShowAnswer(false);
 
-        setIsTransitioning(false);
-      }
+      setIsTransitioning(false);
     } else {
       setIsFinished(true);
       setIsTransitioning(false);

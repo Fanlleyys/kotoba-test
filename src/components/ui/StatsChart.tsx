@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { Card } from '../modules/decks/model';
+import { Card } from '../../modules/decks/model';
 
 interface StatsChartProps {
   cards: Card[];
@@ -19,7 +19,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ cards }) => {
   // Calculate stats: Count of cards by next review range
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const stats = [
     { name: 'Due', count: 0, color: '#d946ef' },
     { name: 'Tom.', count: 0, color: '#a855f7' }, // Tomorrow
@@ -51,12 +51,12 @@ export const StatsChart: React.FC<StatsChartProps> = ({ cards }) => {
           }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-          <XAxis dataKey="name" stroke="#666" tick={{fill: '#9ca3af', fontSize: 12}} />
-          <YAxis stroke="#666" tick={{fill: '#9ca3af', fontSize: 12}} allowDecimals={false} />
-          <Tooltip 
+          <XAxis dataKey="name" stroke="#666" tick={{ fill: '#9ca3af', fontSize: 12 }} />
+          <YAxis stroke="#666" tick={{ fill: '#9ca3af', fontSize: 12 }} allowDecimals={false} />
+          <Tooltip
             contentStyle={{ backgroundColor: '#1a1a24', borderColor: '#333', borderRadius: '8px' }}
             itemStyle={{ color: '#fff' }}
-            cursor={{fill: 'rgba(255,255,255,0.05)'}}
+            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
           />
           <Bar dataKey="count" radius={[4, 4, 0, 0]}>
             {stats.map((entry, index) => (

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { getCards } from '../modules/decks/api';
 import { Card } from '../modules/decks/model';
 import { Play, TrendingUp, Clock, Brain, PlusCircle, Layers, Flame, Zap } from 'lucide-react';
-import { StatsChart } from '../components/StatsChart';
+import { StatsChart } from '../components/ui/StatsChart';
+import SplitText from '../components/ui/SplitText';
 import { getUserStats } from '../modules/gamification/streak';
 import { UserStats, INITIAL_STATS } from '../modules/gamification/model';
 
@@ -37,9 +38,12 @@ export const Dashboard: React.FC = () => {
     <div className="space-y-6 md:space-y-8 animate-fade-in max-w-5xl mx-auto">
 
       <header className="mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-          Welcome back, Sensei.
-        </h1>
+        <SplitText
+          text="Welcome back, Sensei."
+          className="text-3xl md:text-4xl font-bold text-white mb-2"
+          delay={50}
+          duration={0.8}
+        />
         <p className="text-violet-200 text-base md:text-lg">
           {hasCards
             ? `You have ${cards.length} cards in your collection.`

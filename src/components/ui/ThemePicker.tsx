@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Palette, X, Check } from 'lucide-react';
-import { useTheme, THEMES } from '../context/ThemeContext';
+import { useTheme, THEMES } from '../../context/ThemeContext';
 
 export const ThemePicker: React.FC = () => {
     const { theme, setTheme } = useTheme();
