@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, BookOpen, Upload, Zap, Layers, Gamepad2, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutGrid, BookOpen, Upload, Zap, Layers, Gamepad2, Settings as SettingsIcon, ClipboardList } from 'lucide-react';
+import { ReviewReminder } from './ReviewReminder';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -9,6 +10,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="min-h-screen relative overflow-hidden text-gray-100 font-sans">
+      {/* Review Notification Banner */}
+      <ReviewReminder />
+
       {/* Animated Background Blobs - Optimized for Mobile */}
       <div className="fixed top-[-10%] left-[-10%] w-64 h-64 md:w-96 md:h-96 bg-primary rounded-full liquid-blob opacity-20 md:opacity-30 blur-[60px] md:blur-[120px]"></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-secondary rounded-full liquid-blob opacity-15 md:opacity-20 blur-[60px] md:blur-[120px]" style={{ animationDelay: '2s' }}></div>
@@ -38,6 +42,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <NavLink to="/arcade" active={isActive('/arcade')} icon={<Gamepad2 size={18} />}>
                 Arcade
               </NavLink>
+              <NavLink to="/tasks" active={isActive('/tasks')} icon={<ClipboardList size={18} />}>
+                Tasks
+              </NavLink>
               <NavLink to="/import" active={isActive('/import')} icon={<Upload size={18} />}>
                 Import
               </NavLink>
@@ -65,8 +72,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <BookOpen size={24} />
             </Link>
           </div>
+          <MobileNavLink to="/tasks" active={isActive('/tasks')} icon={<ClipboardList size={20} />} label="Tasks" />
           <MobileNavLink to="/arcade" active={isActive('/arcade')} icon={<Gamepad2 size={20} />} label="Arcade" />
-          <MobileNavLink to="/import" active={isActive('/import')} icon={<Upload size={20} />} label="Import" />
         </div>
       </nav>
 

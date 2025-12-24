@@ -2,18 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCards } from '../modules/decks/api';
 import { Card } from '../modules/decks/model';
-import { Play, TrendingUp, Clock, Brain, PlusCircle, Layers, Flame, Zap } from 'lucide-react';
+import { Play, TrendingUp, Clock, Brain, PlusCircle, Layers, Flame, Zap, Target, BarChart3 } from 'lucide-react';
 import { StatsChart } from '../components/ui/StatsChart';
+import { MasteryChart } from '../components/ui/MasteryChart';
+import { WeeklyActivityChart } from '../components/ui/WeeklyActivityChart';
+import { AccuracyTrend } from '../components/ui/AccuracyTrend';
 import SplitText from '../components/ui/SplitText';
-import { getUserStats } from '../modules/gamification/streak';
-import { UserStats, INITIAL_STATS } from '../modules/gamification/model';
+import { getUserStats, getWeeklyStudyData, getAccuracyRate, formatStudyTime } from '../modules/gamification/streak';
+import { UserStats, INITIAL_STATS, StudySession } from '../modules/gamification/model';
 
 export const Dashboard: React.FC = () => {
   const [cards, setCards] = useState<Card[]>([]);
   const [dueCount, setDueCount] = useState(0);
   const [retentionRate, setRetentionRate] = useState(0);
-
   const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
+  const [weeklyData, setWeeklyData] = useState<StudySession[]>([]);
+  const [accuracyRate, setAccuracyRate] = useState(0);
 
   useEffect(() => {
     const allCards = getCards();
@@ -30,6 +34,10 @@ export const Dashboard: React.FC = () => {
 
     const userStats = getUserStats();
     setStats(userStats);
+
+    // Fetch analytics data
+    setWeeklyData(getWeeklyStudyData());
+    setAccuracyRate(getAccuracyRate());
   }, []);
 
   const hasCards = cards.length > 0;
@@ -203,6 +211,102 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Analytics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Card Mastery Chart */}
+        <div className="glass-panel p-4 md:p-6 rounded-3xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-blue-500/20 rounded-lg text-blue-300">
+                <Target size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-base md:text-lg text-white">Card Mastery</h3>
+                <p className="text-xs text-gray-400">Distribusi level penguasaan</p>
+              </div>
+            </div>
+          </div>
+          <div className="h-48 md:h-56 w-full">
+            <MasteryChart cards={cards} />
+          </div>
+        </div>
+
+        {/* Weekly Activity Chart */}
+        <div className="glass-panel p-4 md:p-6 rounded-3xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-purple-500/20 rounded-lg text-purple-300">
+                <BarChart3 size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-base md:text-lg text-white">Weekly Activity</h3>
+                <p className="text-xs text-gray-400">Kartu direview 7 hari terakhir</p>
+              </div>
+            </div>
+          </div>
+          <div className="h-48 md:h-56 w-full">
+            <WeeklyActivityChart data={weeklyData} />
+          </div>
+        </div>
+      </div>
+
+      {/* Accuracy & Study Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        {/* Accuracy Trend */}
+        <div className="lg:col-span-2 glass-panel p-4 md:p-6 rounded-3xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-green-500/20 rounded-lg text-green-300">
+                <TrendingUp size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-base md:text-lg text-white">Accuracy Trend</h3>
+                <p className="text-xs text-gray-400">Persentase jawaban benar</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-green-400">{accuracyRate}%</div>
+              <div className="text-xs text-gray-400">overall</div>
+            </div>
+          </div>
+          <div className="h-40 md:h-48 w-full">
+            <AccuracyTrend data={weeklyData} />
+          </div>
+        </div>
+
+        {/* Study Stats Summary */}
+        <div className="glass-panel p-4 md:p-6 rounded-3xl flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-orange-500/20 rounded-lg text-orange-300">
+              <Clock size={20} />
+            </div>
+            <h3 className="font-bold text-base md:text-lg text-white">Study Stats</h3>
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-3 bg-white/5 rounded-xl">
+              <div className="text-xs text-gray-400 mb-1">Total Study Time</div>
+              <div className="text-xl font-bold text-white">{formatStudyTime(stats.totalStudyTimeMs || 0)}</div>
+            </div>
+            <div className="p-3 bg-white/5 rounded-xl">
+              <div className="text-xs text-gray-400 mb-1">Cards Reviewed</div>
+              <div className="text-xl font-bold text-white">{stats.totalCardsReviewed || 0}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-3 bg-green-500/10 rounded-xl text-center">
+                <div className="text-lg font-bold text-green-400">{stats.totalCorrect || 0}</div>
+                <div className="text-xs text-gray-400">Correct</div>
+              </div>
+              <div className="p-3 bg-red-500/10 rounded-xl text-center">
+                <div className="text-lg font-bold text-red-400">{stats.totalWrong || 0}</div>
+                <div className="text-xs text-gray-400">Wrong</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Jadwal Review (existing) */}
       <div className="glass-panel p-4 md:p-8 rounded-3xl mb-20 md:mb-0">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

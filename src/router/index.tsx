@@ -12,6 +12,7 @@ import { KataCannonGame } from '../game/KataCannonGame';
 import { TestMode } from '../pages/TestMode';
 import { MatchGame } from '../pages/MatchGame';
 import { Settings } from '../pages/Settings';
+import { Tasks } from '../pages/Tasks';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -42,6 +43,10 @@ export const AppRouter: React.FC = () => {
       {/* New games */}
       <Route path="/test" element={<TestMode />} />
       <Route path="/match" element={<MatchGame />} />
+
+      {/* Tasks */}
+      <Route path="/tasks" element={<Tasks />} />
+
       <Route path="/settings" element={<Settings />} />
 
       {/* Fallback */}

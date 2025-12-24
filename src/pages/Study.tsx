@@ -3,11 +3,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getCards, updateCard } from '../modules/decks/api';
 import type { Card } from '../modules/decks/model';
 import { calculateSM2 } from '../services/sm2';
-import { updateStreak, addXp } from '../modules/gamification/streak';
+import { updateStreak, addXp, recordAnswer } from '../modules/gamification/streak';
 import type { Grade } from '../types';
-import { RefreshCw, Check, Keyboard, Gamepad2, ArrowLeft } from 'lucide-react';
+import { RefreshCw, Check, Keyboard, Gamepad2, ArrowLeft, Calendar } from 'lucide-react';
 import { KataCannonGame } from '../game/KataCannonGame';
 import { useStudySettings } from '../context/StudyContext';
+import { ScheduleModal } from '../components/ScheduleModal';
 
 // --- HELPER FUNCTIONS ---
 
@@ -54,6 +55,9 @@ export const Study: React.FC = () => {
   const [inputAnswer, setInputAnswer] = useState('');
   const [feedback, setFeedback] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [_showAnswer, setShowAnswer] = useState(false);
+
+  // Schedule Modal State
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   // ---- Load queue ----
   useEffect(() => {
@@ -125,6 +129,9 @@ export const Study: React.FC = () => {
 
       // Trigger Streak Update
       updateStreak();
+
+      // Track answer for analytics
+      recordAnswer(grade >= 3);
 
       // XP Logic: 3+ (Pass) = 15 XP, else 2 XP (Consolation)
       if (grade >= 3) {
@@ -281,10 +288,20 @@ export const Study: React.FC = () => {
             Session Complete
           </h2>
           <p className="text-gray-400 mb-8">You reviewed {queue.length} cards!</p>
+
+          {/* Schedule Review Button */}
+          <button
+            onClick={() => setShowScheduleModal(true)}
+            className="mb-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold hover:from-violet-500 hover:to-purple-500 transition-all hover:scale-105 shadow-lg shadow-purple-500/30 mx-auto"
+          >
+            <Calendar size={20} />
+            Jadwalkan Review Ulang
+          </button>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handleRepeat}
-              className="px-8 py-3 rounded-xl bg-primary text-white font-bold hover:bg-violet-600 transition-all hover:scale-105 shadow-lg shadow-purple-500/20"
+              className="px-8 py-3 rounded-xl bg-white/10 text-white font-bold hover:bg-white/20 transition-all border border-white/10"
             >
               Review Again
             </button>
@@ -296,6 +313,16 @@ export const Study: React.FC = () => {
             </Link>
           </div>
         </div>
+
+        {/* Schedule Modal */}
+        {showScheduleModal && (
+          <ScheduleModal
+            cardIds={queue.map(c => c.id)}
+            deckId={deckId}
+            cardCount={queue.length}
+            onClose={() => setShowScheduleModal(false)}
+          />
+        )}
       </div>
     );
   }
