@@ -10,6 +10,7 @@ import { KataCannonGame } from '../game/KataCannonGame';
 import { useStudySettings } from '../context/StudyContext';
 import { ScheduleModal } from '../components/ScheduleModal';
 import { LevelUpCelebration } from '../components/LevelUpCelebration';
+import { RubyText } from '../components/ui/RubyText';
 
 // --- HELPER FUNCTIONS ---
 
@@ -339,8 +340,8 @@ export const Study: React.FC = () => {
           <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${accuracy >= 80 ? 'bg-gradient-to-r from-green-500 to-emerald-400' :
-                  accuracy >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-400' :
-                    'bg-gradient-to-r from-red-500 to-pink-400'
+                accuracy >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-400' :
+                  'bg-gradient-to-r from-red-500 to-pink-400'
                 }`}
               style={{ width: `${accuracy}%` }}
             />
@@ -568,18 +569,13 @@ export const Study: React.FC = () => {
                   ) : (
                     // Normal Mode (Front = Japanese)
                     <>
-                      {/* FURIGANA DISPLAY */}
-                      {(showFurigana && (containsKanji || currentCard.reading)) ? (
-                        <div className="text-base md:text-2xl text-pink-300 font-medium mb-1 tracking-wider opacity-90 font-jp">
-                          {currentCard.reading || (containsKanji ? '...' : '')}
-                        </div>
-                      ) : (
-                        <div className="h-4 md:h-7 mb-1" />
-                      )}
-
-                      {/* Teks Utama */}
+                      {/* Teks Utama dengan Furigana Ruby */}
                       <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-jp text-center text-white drop-shadow-[0_0_20px_rgba(168,85,247,0.4)] mb-2 leading-tight">
-                        {currentCard.japanese || '?'}
+                        <RubyText
+                          text={currentCard.japanese || '?'}
+                          reading={currentCard.reading || currentCard.furigana}
+                          showReading={showFurigana && containsKanji}
+                        />
                       </h1>
                     </>
                   )}
@@ -598,13 +594,12 @@ export const Study: React.FC = () => {
                   {reverseCards ? (
                     // Reverse Mode (Back = Japanese)
                     <>
-                      {(showFurigana && (containsKanji || currentCard.reading)) && (
-                        <div className="text-base md:text-2xl text-pink-300 font-medium mb-1 tracking-wider opacity-90 font-jp">
-                          {currentCard.reading || '...'}
-                        </div>
-                      )}
                       <h3 className="text-3xl md:text-6xl font-bold font-jp text-center mb-2 md:mb-6 text-white leading-tight">
-                        {currentCard.japanese || '?'}
+                        <RubyText
+                          text={currentCard.japanese || '?'}
+                          reading={currentCard.reading || currentCard.furigana}
+                          showReading={showFurigana && containsKanji}
+                        />
                       </h3>
                       <div className="text-gray-500 font-mono mb-4 md:mb-6 text-sm md:text-lg">
                         {currentCard.romaji}

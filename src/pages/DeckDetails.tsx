@@ -172,7 +172,8 @@ export const DeckDetails: React.FC = () => {
         id: `ai-${Date.now()}-${index}`,
         deckId: deckId,
         japanese: item.japanese,
-        furigana: item.furigana || '', // 🔥 Simpan Furigana
+        furigana: item.furigana || '', // Legacy field
+        reading: item.furigana || '',  // 🔥 NEW: Unified reading field for RubyText
         romaji: item.romaji,
         indonesia: item.indonesia,
         example: item.example || '',

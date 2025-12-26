@@ -9,6 +9,21 @@ body {
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
+/* Ruby Text (Furigana) Styling */
+ruby {
+  display: inline-flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  vertical-align: bottom;
+}
+
+ruby rt {
+  font-size: 0.4em;
+  line-height: 1.2;
+  text-align: center;
+  opacity: 0.9;
+}
+
 /* --- THEME CONFIGURATION --- */
 :root {
   /* Default: Violet */
