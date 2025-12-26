@@ -3,20 +3,21 @@ import { Link } from 'react-router-dom';
 import { useTheme, THEMES } from '../context/ThemeContext';
 import { useStudySettings } from '../context/StudyContext';
 import { useAuth } from '../context/AuthContext';
-import { Palette, BookOpen, Info, Github, Heart, Zap, Upload, Database, ChevronRight, Cloud, LogOut, RefreshCw, Loader2, CheckCircle, Camera, X } from 'lucide-react';
+import { Palette, BookOpen, Info, Github, Heart, Zap, Upload, Database, ChevronRight, Cloud, LogOut, RefreshCw, Loader2, CheckCircle, Camera, X, ExternalLink } from 'lucide-react';
 import { syncData, saveToCloud } from '../services/cloudSync';
 import { fileToBase64, resizeImage, saveProfilePhoto, getProfilePhoto, removeProfilePhoto } from '../services/profilePhoto';
 
 export const Settings: React.FC = () => {
     const { theme, setTheme } = useTheme();
     const { showFurigana, setShowFurigana, reverseCards, setReverseCards } = useStudySettings();
-    const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+    const { user, loading: authLoading, signInWithGoogle, signOut, isMobileApp } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Cloud sync state
     const [isSyncing, setIsSyncing] = useState(false);
     const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [lastSyncResult, setLastSyncResult] = useState<string>('');
+    const [loginError, setLoginError] = useState<string | null>(null);
 
     // Profile photo state
     const [customPhoto, setCustomPhoto] = useState<string | null>(null);
@@ -298,8 +299,37 @@ export const Settings: React.FC = () => {
                     <div className="text-center py-6">
                         <Cloud size={48} className="mx-auto text-gray-600 mb-4" />
                         <p className="text-gray-400 mb-4">Login untuk sync data ke cloud</p>
+
+                        {/* Login Error Message */}
+                        {loginError && (
+                            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-sm">
+                                <p className="mb-2">⚠️ {loginError}</p>
+                                <a
+                                    href="https://kotoba-test-green.vercel.app/#/settings"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-amber-200 underline"
+                                >
+                                    Login via Web <ExternalLink size={12} />
+                                </a>
+                            </div>
+                        )}
+
                         <button
-                            onClick={signInWithGoogle}
+                            onClick={async () => {
+                                setLoginError(null);
+                                try {
+                                    await signInWithGoogle();
+                                } catch (error: any) {
+                                    if (error.message === 'LOGIN_WEBVIEW_ERROR') {
+                                        setLoginError('Login di APK tidak tersedia. Silakan login via web.');
+                                    } else if (error.message?.includes('missing initial state')) {
+                                        setLoginError('Session error. Silakan login via web.');
+                                    } else {
+                                        setLoginError('Login gagal. Coba lagi atau gunakan versi web.');
+                                    }
+                                }
+                            }}
                             className="inline-flex items-center gap-3 px-6 py-3 bg-white text-gray-800 font-medium rounded-xl hover:bg-gray-100 transition-all"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -310,6 +340,13 @@ export const Settings: React.FC = () => {
                             </svg>
                             Login with Google
                         </button>
+
+                        {/* Mobile App Note */}
+                        {isMobileApp && (
+                            <p className="mt-4 text-gray-500 text-xs">
+                                💡 Tip: Jika login gagal, buka web version di browser HP
+                            </p>
+                        )}
                     </div>
                 )}
             </section>

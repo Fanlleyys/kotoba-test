@@ -113,17 +113,33 @@ export const DeckDetails: React.FC = () => {
 
       const ai = new GoogleGenAI({ apiKey });
 
-      // 🔥 UPDATED PROMPT: Minta Furigana explisit
-      const prompt = `Generate ${aiCount} Japanese vocabulary flashcards about "${aiTopic}".
-      Target level: Beginner to Intermediate (N5-N4).
-      
-      Requirements:
-      1. Japanese word (Kanji if applicable, otherwise Kana)
-      2. Furigana/Reading (Hiragana only). If the word is already Hiragana/Katakana, just repeat it.
-      3. Romaji reading
-      4. Indonesian Meaning
-      5. Example sentence in Japanese
-      `;
+      // 🔥 SMARTER PROMPT: Natural, practical vocabulary
+      const prompt = `You are a Japanese language expert creating vocabulary flashcards for Indonesian learners.
+
+Generate ${aiCount} Japanese vocabulary words about "${aiTopic}".
+
+IMPORTANT GUIDELINES:
+- Choose words that native Japanese speakers ACTUALLY USE in daily life
+- Avoid obscure or rarely-used words
+- Prioritize practical, high-frequency vocabulary
+- Include a mix of nouns, verbs, and adjectives when relevant
+- For each word, provide a NATURAL example sentence that shows real usage
+
+TARGET LEVEL: JLPT N5-N4 (Beginner to Intermediate)
+
+FOR EACH WORD, PROVIDE:
+1. japanese: The word in Kanji (or Kana if no Kanji exists)
+2. furigana: Hiragana reading. If already Hiragana/Katakana, repeat it.
+3. romaji: Romanized pronunciation
+4. indonesia: Clear Indonesian translation (can include multiple meanings separated by semicolon)
+5. example: A short, natural example sentence in Japanese (10-15 words max)
+
+QUALITY CHECKS:
+✓ Words should be commonly used in modern Japanese
+✓ Example sentences should be grammatically correct
+✓ Furigana must match the kanji reading exactly
+✓ Avoid overly formal or archaic expressions
+`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',

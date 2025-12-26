@@ -43,7 +43,7 @@ export const calculateSM2 = (currentMeta: ReviewMeta, grade: Grade): ReviewMeta 
   nextReviewDate.setHours(0, 0, 0, 0);
 
   return {
-    ef,
+    ef, 
     repetitions,
     interval,
     nextReview: nextReviewDate.toISOString(),
