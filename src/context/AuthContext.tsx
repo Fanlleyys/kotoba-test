@@ -5,9 +5,11 @@ import {
     signInWithRedirect,
     getRedirectResult,
     signOut as firebaseSignOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    signInWithCredential,
+    GoogleAuthProvider as GoogleAuthProviderClass
 } from 'firebase/auth';
-import { auth, googleProvider } from '../services/firebase';
+import { auth, googleProvider, DEEP_LINK_CONFIG } from '../services/firebase';
 
 interface AuthContextType {
     user: User | null;
@@ -37,10 +39,35 @@ const detectMobileApp = (): boolean => {
     return (
         url.startsWith('capacitor://') ||
         url.startsWith('ionic://') ||
-        url.includes('localhost:') ||
+        url.startsWith(`${DEEP_LINK_CONFIG.scheme}://`) ||
         userAgent.includes('wv') || // WebView
         (window as any).Capacitor !== undefined
     );
+};
+
+// Parse deep link URL for OAuth token
+const parseDeepLinkAuth = (): { idToken?: string; accessToken?: string } | null => {
+    if (typeof window === 'undefined') return null;
+    
+    const url = window.location.href;
+    
+    // Check if this is a deep link callback
+    if (url.includes(`${DEEP_LINK_CONFIG.scheme}://`) || 
+        url.includes(`/${DEEP_LINK_CONFIG.callbackPath}`)) {
+        
+        // Try to extract tokens from URL hash or query params
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const queryParams = new URLSearchParams(window.location.search);
+        
+        const idToken = hashParams.get('id_token') || queryParams.get('id_token');
+        const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+        
+        if (idToken || accessToken) {
+            return { idToken: idToken || undefined, accessToken: accessToken || undefined };
+        }
+    }
+    
+    return null;
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -49,6 +76,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isMobileApp] = useState(detectMobileApp);
 
     useEffect(() => {
+        // Handle deep link OAuth callback
+        const handleDeepLinkAuth = async () => {
+            const tokens = parseDeepLinkAuth();
+            if (tokens?.idToken) {
+                try {
+                    console.log('Deep link auth detected, signing in with credential...');
+                    const credential = GoogleAuthProviderClass.credential(tokens.idToken, tokens.accessToken);
+                    await signInWithCredential(auth, credential);
+                    
+                    // Clean up URL
+                    window.history.replaceState({}, document.title, '/');
+                } catch (error) {
+                    console.error('Deep link auth error:', error);
+                }
+            }
+        };
+
         // Check for redirect result when app loads
         const handleRedirectResult = async () => {
             try {
@@ -64,7 +108,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         };
 
+        // Try deep link first, then redirect result
+        handleDeepLinkAuth();
         handleRedirectResult();
+
+        // Listen for Capacitor app URL open events (deep links)
+        const setupAppUrlListener = async () => {
+            if ((window as any).Capacitor?.Plugins?.App) {
+                const { App } = (window as any).Capacitor.Plugins;
+                App.addListener('appUrlOpen', async (event: { url: string }) => {
+                    console.log('App URL opened:', event.url);
+                    
+                    // Parse the URL for auth tokens
+                    if (event.url.includes(DEEP_LINK_CONFIG.callbackPath)) {
+                        const urlObj = new URL(event.url);
+                        const idToken = urlObj.searchParams.get('id_token');
+                        
+                        if (idToken) {
+                            try {
+                                const credential = GoogleAuthProviderClass.credential(idToken);
+                                await signInWithCredential(auth, credential);
+                            } catch (error) {
+                                console.error('Capacitor URL auth error:', error);
+                            }
+                        }
+                    }
+                });
+            }
+        };
+
+        setupAppUrlListener();
 
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
@@ -82,8 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
             }
 
-            // For mobile apps, try redirect first
-            console.log('Mobile detected, using redirect...');
+            // For mobile apps, use redirect (deep link will handle callback)
+            console.log('Mobile detected, using redirect with deep link...');
             await signInWithRedirect(auth, googleProvider);
 
         } catch (error: any) {
@@ -91,10 +164,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // Handle specific errors
             if (error.code === 'auth/popup-blocked') {
-                // Fallback to redirect
                 await signInWithRedirect(auth, googleProvider);
             } else if (error.message?.includes('missing initial state')) {
-                // WebView storage issue - show helpful message
                 throw new Error('LOGIN_WEBVIEW_ERROR');
             } else {
                 throw error;

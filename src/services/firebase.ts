@@ -12,14 +12,47 @@ const firebaseConfig = {
     measurementId: "G-XCSQS051B3"
 };
 
+// Deep Link Configuration for Capacitor APK
+export const DEEP_LINK_CONFIG = {
+    scheme: 'katasensei',      // Custom URL scheme: katasensei://
+    host: 'auth',              // Host: katasensei://auth/
+    callbackPath: 'callback',  // Full: katasensei://auth/callback
+};
+
+// Build the redirect URL based on environment
+const getRedirectUrl = (): string | undefined => {
+    // Check if running in Capacitor
+    if (typeof window !== 'undefined') {
+        const url = document.URL;
+
+        // In Capacitor app, use deep link
+        if (url.startsWith('capacitor://') ||
+            url.startsWith('ionic://') ||
+            (window as any).Capacitor !== undefined) {
+            return `${DEEP_LINK_CONFIG.scheme}://${DEEP_LINK_CONFIG.host}/${DEEP_LINK_CONFIG.callbackPath}`;
+        }
+    }
+
+    // For web, use default (undefined = current domain)
+    return undefined;
+};
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Auth
+// Auth with custom redirect URL for Capacitor
 export const auth = getAuth(app);
+
+// Configure Google Provider with custom parameters
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+    prompt: 'select_account'
+});
 
 // Firestore
 export const db = getFirestore(app);
+
+// Export redirect URL for use in auth context
+export const deepLinkRedirectUrl = getRedirectUrl();
 
 export default app;
