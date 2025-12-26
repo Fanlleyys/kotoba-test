@@ -88,10 +88,10 @@ const NavLink: React.FC<{ to: string; active: boolean; icon: React.ReactNode; ch
   <Link
     to={to}
     className={`
-      flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium
+      flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 text-sm font-medium touch-manipulation
       ${active
         ? 'bg-white/10 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] border border-white/10'
-        : 'text-gray-400 hover:text-white hover:bg-white/5'}
+        : 'text-gray-400 hover:text-white hover:bg-white/5 active:scale-95'}
     `}
   >
     {icon}
@@ -103,8 +103,8 @@ const MobileNavLink: React.FC<{ to: string; active: boolean; icon: React.ReactNo
   <Link
     to={to}
     className={`
-      flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all w-16
-      ${active ? 'text-primary' : 'text-gray-500 hover:text-gray-300'}
+      flex flex-col items-center justify-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-150 touch-manipulation
+      ${active ? 'text-primary scale-105' : 'text-gray-500 active:text-gray-300 active:scale-95'}
     `}
   >
     {icon}

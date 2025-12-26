@@ -237,3 +237,162 @@ body {
 .animate-bounce-in {
   animation: bounce-in 0.6s ease-out forwards;
 }
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+
+/* Smooth scrolling for the entire app */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text selection on interactive elements */
+button,
+a,
+.interactive {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* GPU acceleration for smoother animations */
+.glass-panel,
+.animate-fade-in,
+button,
+a {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Smoother transitions on mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+
+  /* Reduce animation duration for snappier feel */
+  .transition-all {
+    transition-duration: 150ms !important;
+  }
+
+  /* Optimize touch targets (minimum 44px) */
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent overscroll bounce on iOS */
+  body {
+    overscroll-behavior: none;
+  }
+
+  /* Optimize glass panels for mobile performance */
+  .glass-panel {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Reduce blur intensity for better performance */
+  .liquid-blob {
+    filter: blur(60px);
+    opacity: 0.2;
+    animation: none;
+  }
+
+  /* Safe area for notched phones */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* Active state for touch feedback */
+button:active,
+a:active,
+[role="button"]:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Prevent zoom on input focus (iOS) */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+/* Smooth card flip animation */
+.flip-card {
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+.flip-card-inner {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+/* Pull-to-refresh prevention when not needed */
+@supports (-webkit-touch-callout: none) {
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Optimize for 60fps animations */
+@media screen and (prefers-reduced-motion: no-preference) {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Fast touch response */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Improved scrollbar for mobile (hidden but functional) */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+}
