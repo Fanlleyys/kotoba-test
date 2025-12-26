@@ -8,7 +8,7 @@ const STATS_KEY = 'katasensei_user_stats_v1';
  * Ensures all new fields have default values
  */
 export const getUserStats = (): UserStats => {
-    const stored = storage.get<Partial<UserStats>>(STATS_KEY, null);
+    const stored = storage.get<Partial<UserStats> | null>(STATS_KEY, null);
 
     // Merge stored data with initial stats to ensure all fields exist
     // This handles migration from old data format

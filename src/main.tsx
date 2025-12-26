@@ -5,6 +5,7 @@ import './index.css';
 import { ThemeProvider } from './context/ThemeContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { StudyProvider } from './context/StudyContext';
+import { AuthProvider } from './context/AuthContext';
 
 const rootElement = document.getElementById('root');
 
@@ -18,9 +19,11 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
-        <StudyProvider>
-          <App />
-        </StudyProvider>
+        <AuthProvider>
+          <StudyProvider>
+            <App />
+          </StudyProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>

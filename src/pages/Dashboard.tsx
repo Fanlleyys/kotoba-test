@@ -7,9 +7,9 @@ import { StatsChart } from '../components/ui/StatsChart';
 import { MasteryChart } from '../components/ui/MasteryChart';
 import { WeeklyActivityChart } from '../components/ui/WeeklyActivityChart';
 import { AccuracyTrend } from '../components/ui/AccuracyTrend';
-import SplitText from '../components/ui/SplitText';
 import { getUserStats, getWeeklyStudyData, getAccuracyRate, formatStudyTime } from '../modules/gamification/streak';
 import { UserStats, INITIAL_STATS, StudySession } from '../modules/gamification/model';
+import { useAuth } from '../context/AuthContext';
 
 export const Dashboard: React.FC = () => {
   const [cards, setCards] = useState<Card[]>([]);
@@ -18,6 +18,10 @@ export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<UserStats>(INITIAL_STATS);
   const [weeklyData, setWeeklyData] = useState<StudySession[]>([]);
   const [accuracyRate, setAccuracyRate] = useState(0);
+  const { user } = useAuth();
+
+  // Get first name from display name
+  const userName = user?.displayName?.split(' ')[0] || 'Sensei';
 
   useEffect(() => {
     const allCards = getCards();
@@ -46,12 +50,9 @@ export const Dashboard: React.FC = () => {
     <div className="space-y-6 md:space-y-8 animate-fade-in max-w-5xl mx-auto">
 
       <header className="mb-6 md:mb-8">
-        <SplitText
-          text="Welcome back, Sensei."
-          className="text-3xl md:text-4xl font-bold text-white mb-2"
-          delay={50}
-          duration={0.8}
-        />
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+          Welcome back, {userName}.
+        </h1>
         <p className="text-violet-200 text-base md:text-lg">
           {hasCards
             ? `You have ${cards.length} cards in your collection.`

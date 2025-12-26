@@ -9,6 +9,7 @@ import { RefreshCw, Check, Keyboard, Gamepad2, ArrowLeft, Calendar } from 'lucid
 import { KataCannonGame } from '../game/KataCannonGame';
 import { useStudySettings } from '../context/StudyContext';
 import { ScheduleModal } from '../components/ScheduleModal';
+import { LevelUpCelebration } from '../components/LevelUpCelebration';
 
 // --- HELPER FUNCTIONS ---
 
@@ -59,6 +60,13 @@ export const Study: React.FC = () => {
   // Schedule Modal State
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
+  // Level Up Celebration State
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [newLevel, setNewLevel] = useState(1);
+
+  // Session Recap State
+  const [sessionResults, setSessionResults] = useState<{ card: Card; grade: number }[]>([]);
+
   // ---- Load queue ----
   useEffect(() => {
     setIsLoading(true);
@@ -68,6 +76,8 @@ export const Study: React.FC = () => {
     setInputAnswer('');
     setFeedback('idle');
     setShowAnswer(false);
+    // Reset session results
+    setSessionResults([]);
 
     setCurrentIndex(0);
 
@@ -127,6 +137,9 @@ export const Study: React.FC = () => {
       const updatedCard: Card = { ...currentCard, reviewMeta: newMeta };
       updateCard(updatedCard);
 
+      // Track session result
+      setSessionResults(prev => [...prev, { card: currentCard, grade }]);
+
       // Trigger Streak Update
       updateStreak();
 
@@ -134,10 +147,12 @@ export const Study: React.FC = () => {
       recordAnswer(grade >= 3);
 
       // XP Logic: 3+ (Pass) = 15 XP, else 2 XP (Consolation)
-      if (grade >= 3) {
-        addXp(15);
-      } else {
-        addXp(2);
+      const xpResult = grade >= 3 ? addXp(15) : addXp(2);
+
+      // Check for level up
+      if (xpResult.levelUp) {
+        setNewLevel(xpResult.newLevel);
+        setShowLevelUp(true);
       }
 
       handleNext();
@@ -278,38 +293,121 @@ export const Study: React.FC = () => {
   }
 
   if (isFinished) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-10 space-y-6 text-center">
-        <div className="flex flex-col items-center justify-center h-[60vh] text-center animate-fade-in">
-          <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(236,72,153,0.4)]">
-            <RefreshCw size={48} className="text-white" />
-          </div>
-          <h2 className="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-            Session Complete
-          </h2>
-          <p className="text-gray-400 mb-8">You reviewed {queue.length} cards!</p>
+    const correctCount = sessionResults.filter(r => r.grade >= 3).length;
+    const wrongCount = sessionResults.filter(r => r.grade < 3).length;
+    const accuracy = sessionResults.length > 0
+      ? Math.round((correctCount / sessionResults.length) * 100)
+      : 0;
+    const wrongCards = sessionResults.filter(r => r.grade < 3).map(r => r.card);
 
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-10 space-y-6 animate-fade-in pb-24">
+        {/* Header */}
+        <div className="text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(236,72,153,0.4)] mx-auto">
+            <RefreshCw size={40} className="text-white" />
+          </div>
+          <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+            Session Complete!
+          </h2>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="glass-panel p-4 rounded-2xl text-center">
+            <div className="text-3xl font-bold text-white">{queue.length}</div>
+            <div className="text-xs text-gray-400">Total</div>
+          </div>
+          <div className="glass-panel p-4 rounded-2xl text-center bg-green-500/10 border border-green-500/20">
+            <div className="text-3xl font-bold text-green-400">{correctCount}</div>
+            <div className="text-xs text-gray-400">Benar</div>
+          </div>
+          <div className="glass-panel p-4 rounded-2xl text-center bg-red-500/10 border border-red-500/20">
+            <div className="text-3xl font-bold text-red-400">{wrongCount}</div>
+            <div className="text-xs text-gray-400">Salah</div>
+          </div>
+        </div>
+
+        {/* Accuracy Bar */}
+        <div className="glass-panel p-4 rounded-2xl">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-gray-400">Akurasi</span>
+            <span className={`text-2xl font-bold ${accuracy >= 80 ? 'text-green-400' : accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+              {accuracy}%
+            </span>
+          </div>
+          <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${accuracy >= 80 ? 'bg-gradient-to-r from-green-500 to-emerald-400' :
+                  accuracy >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-400' :
+                    'bg-gradient-to-r from-red-500 to-pink-400'
+                }`}
+              style={{ width: `${accuracy}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Wrong Cards List */}
+        {wrongCards.length > 0 && (
+          <div className="glass-panel p-4 rounded-2xl">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <span className="w-2 h-2 bg-red-400 rounded-full" />
+                Perlu Dipelajari Lagi ({wrongCards.length})
+              </h3>
+              <button
+                onClick={() => {
+                  // Create new session with only wrong cards
+                  setQueue(wrongCards);
+                  setCurrentIndex(0);
+                  setIsFinished(false);
+                  setSessionResults([]);
+                }}
+                className="text-xs px-3 py-1.5 bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors font-medium"
+              >
+                Review Ulang
+              </button>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {wrongCards.map((card, i) => (
+                <div key={card.id} className="flex items-center gap-3 p-2 bg-white/5 rounded-xl">
+                  <span className="text-xs text-gray-500 w-5">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-white font-jp text-lg">{card.japanese}</span>
+                    {card.furigana && (
+                      <span className="text-gray-400 text-xs ml-2">({card.furigana})</span>
+                    )}
+                  </div>
+                  <span className="text-gray-400 text-sm truncate max-w-[100px]">{card.indonesia}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="space-y-3">
           {/* Schedule Review Button */}
           <button
             onClick={() => setShowScheduleModal(true)}
-            className="mb-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold hover:from-violet-500 hover:to-purple-500 transition-all hover:scale-105 shadow-lg shadow-purple-500/30 mx-auto"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold hover:from-violet-500 hover:to-purple-500 transition-all shadow-lg shadow-purple-500/30"
           >
             <Calendar size={20} />
             Jadwalkan Review Ulang
           </button>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex gap-3">
             <button
               onClick={handleRepeat}
-              className="px-8 py-3 rounded-xl bg-white/10 text-white font-bold hover:bg-white/20 transition-all border border-white/10"
+              className="flex-1 px-6 py-3 rounded-xl bg-white/10 text-white font-bold hover:bg-white/20 transition-all border border-white/10"
             >
-              Review Again
+              Review All
             </button>
             <Link
-              to="/decks"
-              className="px-8 py-3 rounded-xl bg-white/10 text-white font-bold hover:bg-white/20 transition-all border border-white/10"
+              to="/"
+              className="flex-1 px-6 py-3 rounded-xl bg-white/10 text-white font-bold hover:bg-white/20 transition-all border border-white/10 text-center"
             >
-              Back to Decks
+              Dashboard
             </Link>
           </div>
         </div>
@@ -596,6 +694,13 @@ export const Study: React.FC = () => {
           .rotate-y-180 { transform: rotateY(180deg); }
         `}</style>
       </div>
+
+      {/* Level Up Celebration */}
+      <LevelUpCelebration
+        level={newLevel}
+        isVisible={showLevelUp}
+        onClose={() => setShowLevelUp(false)}
+      />
     </div >
   );
 };

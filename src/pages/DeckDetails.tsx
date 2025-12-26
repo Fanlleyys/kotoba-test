@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { GoogleGenAI, Type } from '@google/genai';
-import { getDecks, getCards, deleteCard, addCards } from '../modules/decks/api';
+import { getDecks, getCards, deleteCard, addCards, updateCard } from '../modules/decks/api';
 import { getInitialReviewMeta } from '../services/sm2';
 import { Deck, Card } from '../modules/decks/model';
+import { EditCardModal } from '../components/EditCardModal';
 import {
   ArrowLeft,
   Search,
@@ -17,7 +18,8 @@ import {
   Gamepad2,
   CheckSquare,
   Layers,
-  PlayCircle
+  PlayCircle,
+  Edit2
 } from 'lucide-react';
 
 export const DeckDetails: React.FC = () => {
@@ -76,6 +78,20 @@ export const DeckDetails: React.FC = () => {
       deleteCard(cardId);
       loadData();
     }
+  };
+
+  // ============== EDIT CARD ==============
+  const [editingCard, setEditingCard] = useState<Card | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleEditCard = (card: Card) => {
+    setEditingCard(card);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveCard = (updatedCard: Card) => {
+    updateCard(updatedCard);
+    loadData();
   };
 
   // ============== AI GENERATION (FURIGANA SUPPORT) ==============
@@ -231,7 +247,7 @@ export const DeckDetails: React.FC = () => {
     }
 
     const targetPath = modeModal.type === 'arcade' ? '/arcade' : '/study';
-    
+
     setModeModal({ isOpen: false, type: null });
     navigate(`${targetPath}?${params.toString()}`);
   };
@@ -419,13 +435,22 @@ export const DeckDetails: React.FC = () => {
                         {card.indonesia}
                       </td>
                       <td className="p-2 md:p-4 text-right">
-                        <button
-                          onClick={() => handleDeleteCard(card.id)}
-                          className="p-2 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                          title="Delete Card"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleEditCard(card)}
+                            className="p-2 rounded-lg hover:bg-primary/20 text-gray-500 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            title="Edit Card"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCard(card.id)}
+                            className="p-2 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            title="Delete Card"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -439,82 +464,82 @@ export const DeckDetails: React.FC = () => {
       {/* MODE SELECTION MODAL */}
       {modeModal.isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-black/60 backdrop-blur-md transition-all animate-fade-in"
             onClick={() => setModeModal({ ...modeModal, isOpen: false })}
           />
-          
+
           <div className="relative bg-[#1a1a24] border border-white/10 w-full max-w-md rounded-2xl p-6 shadow-2xl animate-fade-in ring-1 ring-white/10">
-             <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    {modeModal.type === 'arcade' ? <Gamepad2 className="text-blue-400" /> : <BookOpen className="text-emerald-400" />}
-                    {modeModal.type === 'arcade' ? 'Arcade Mode' : 'Study Session'}
-                  </h2>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Choose which cards to include in this session.
-                  </p>
-                </div>
-                <button 
-                  onClick={() => setModeModal({ ...modeModal, isOpen: false })}
-                  className="text-gray-500 hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
-             </div>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  {modeModal.type === 'arcade' ? <Gamepad2 className="text-blue-400" /> : <BookOpen className="text-emerald-400" />}
+                  {modeModal.type === 'arcade' ? 'Arcade Mode' : 'Study Session'}
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Choose which cards to include in this session.
+                </p>
+              </div>
+              <button
+                onClick={() => setModeModal({ ...modeModal, isOpen: false })}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-             <div className="space-y-3">
-               {selectedIds.length > 0 ? (
-                 <>
-                   <button
-                     onClick={() => handleConfirmMode(true)}
-                     className="w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-primary/20 to-violet-600/20 border border-primary/50 hover:bg-primary/20 transition-all group"
-                   >
-                     <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                         <CheckSquare size={20} />
-                       </div>
-                       <div className="text-left">
-                         <div className="font-bold text-white">Selected Cards Only</div>
-                         <div className="text-xs text-gray-400">Play with {selectedIds.length} checked words</div>
-                       </div>
-                     </div>
-                     <ArrowLeft className="rotate-180 text-gray-500 group-hover:text-white transition-colors" size={18} />
-                   </button>
+            <div className="space-y-3">
+              {selectedIds.length > 0 ? (
+                <>
+                  <button
+                    onClick={() => handleConfirmMode(true)}
+                    className="w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-primary/20 to-violet-600/20 border border-primary/50 hover:bg-primary/20 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <CheckSquare size={20} />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-bold text-white">Selected Cards Only</div>
+                        <div className="text-xs text-gray-400">Play with {selectedIds.length} checked words</div>
+                      </div>
+                    </div>
+                    <ArrowLeft className="rotate-180 text-gray-500 group-hover:text-white transition-colors" size={18} />
+                  </button>
 
-                   <button
-                     onClick={() => handleConfirmMode(false)}
-                     className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
-                   >
-                     <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-300 group-hover:scale-110 transition-transform">
-                         <Layers size={20} />
-                       </div>
-                       <div className="text-left">
-                         <div className="font-bold text-gray-200">All Cards</div>
-                         <div className="text-xs text-gray-500">Play with all {cards.length} cards in deck</div>
-                       </div>
-                     </div>
-                     <ArrowLeft className="rotate-180 text-gray-500 group-hover:text-white transition-colors" size={18} />
-                   </button>
-                 </>
-               ) : (
-                  <div className="text-center py-4">
-                     <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3">
-                       <Layers size={24} className="text-gray-400" />
-                     </div>
-                     <p className="text-gray-300 mb-6">
-                       No specific cards selected. Start with all <b>{cards.length}</b> cards?
-                     </p>
-                     <button
-                       onClick={() => handleConfirmMode(false)}
-                       className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                     >
-                       <PlayCircle size={18} /> Start Session
-                     </button>
+                  <button
+                    onClick={() => handleConfirmMode(false)}
+                    className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-300 group-hover:scale-110 transition-transform">
+                        <Layers size={20} />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-bold text-gray-200">All Cards</div>
+                        <div className="text-xs text-gray-500">Play with all {cards.length} cards in deck</div>
+                      </div>
+                    </div>
+                    <ArrowLeft className="rotate-180 text-gray-500 group-hover:text-white transition-colors" size={18} />
+                  </button>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Layers size={24} className="text-gray-400" />
                   </div>
-               )}
-             </div>
+                  <p className="text-gray-300 mb-6">
+                    No specific cards selected. Start with all <b>{cards.length}</b> cards?
+                  </p>
+                  <button
+                    onClick={() => handleConfirmMode(false)}
+                    className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <PlayCircle size={18} /> Start Session
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -588,11 +613,10 @@ export const DeckDetails: React.FC = () => {
               <button
                 type="submit"
                 disabled={isGenerating || !aiTopic}
-                className={`w-full py-3.5 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all ${
-                  isGenerating
-                    ? 'bg-gray-700 cursor-wait opacity-70'
-                    : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 hover:scale-[1.02] shadow-pink-500/20'
-                }`}
+                className={`w-full py-3.5 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all ${isGenerating
+                  ? 'bg-gray-700 cursor-wait opacity-70'
+                  : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 hover:scale-[1.02] shadow-pink-500/20'
+                  }`}
               >
                 {isGenerating ? (
                   <>
@@ -608,6 +632,17 @@ export const DeckDetails: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Card Modal */}
+      <EditCardModal
+        card={editingCard}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingCard(null);
+        }}
+        onSave={handleSaveCard}
+      />
     </div>
   );
 };

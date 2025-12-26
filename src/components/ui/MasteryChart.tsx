@@ -4,8 +4,7 @@ import {
     Pie,
     Cell,
     ResponsiveContainer,
-    Tooltip,
-    Legend
+    Tooltip
 } from 'recharts';
 import { Card } from '../../modules/decks/model';
 
