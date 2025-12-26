@@ -10,7 +10,7 @@ import { fileToBase64, resizeImage, saveProfilePhoto, getProfilePhoto, removePro
 export const Settings: React.FC = () => {
     const { theme, setTheme } = useTheme();
     const { showFurigana, setShowFurigana, reverseCards, setReverseCards } = useStudySettings();
-    const { user, loading: authLoading, signInWithGoogle, signOut, isMobileApp } = useAuth();
+    const { user, loading: authLoading, signInWithGoogle, signOut, isMobileApp, authError } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Cloud sync state
@@ -301,9 +301,9 @@ export const Settings: React.FC = () => {
                         <p className="text-gray-400 mb-4">Login untuk sync data ke cloud</p>
 
                         {/* Login Error Message */}
-                        {loginError && (
+                        {(loginError || authError) && (
                             <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-sm">
-                                <p className="mb-2">⚠️ {loginError}</p>
+                                <p className="mb-2">⚠️ {loginError || authError}</p>
                                 <a
                                     href="https://kotoba-test-green.vercel.app/#/settings"
                                     target="_blank"
