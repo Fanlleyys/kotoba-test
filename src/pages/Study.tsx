@@ -11,6 +11,8 @@ import { useStudySettings } from '../context/StudyContext';
 import { ScheduleModal } from '../components/ScheduleModal';
 import { LevelUpCelebration } from '../components/LevelUpCelebration';
 import { RubyText } from '../components/ui/RubyText';
+import { triggerHaptic } from '../services/haptics';
+import { audio } from '../services/audio';
 
 // --- HELPER FUNCTIONS ---
 
@@ -147,6 +149,15 @@ export const Study: React.FC = () => {
       // Track answer for analytics
       recordAnswer(grade >= 3);
 
+      // Haptics & Sound based on Grade
+      if (grade >= 3) {
+        triggerHaptic('success');
+        audio.play('correct');
+      } else {
+        triggerHaptic('error');
+        audio.play('wrong');
+      }
+
       // XP Logic: 3+ (Pass) = 15 XP, else 2 XP (Consolation)
       const xpResult = grade >= 3 ? addXp(15) : addXp(2);
 
@@ -154,6 +165,7 @@ export const Study: React.FC = () => {
       if (xpResult.levelUp) {
         setNewLevel(xpResult.newLevel);
         setShowLevelUp(true);
+        audio.play('levelUp');
       }
 
       handleNext();
@@ -221,6 +233,8 @@ export const Study: React.FC = () => {
 
     if (normalizedInput === normalizedRomaji || normalizedInput === normalizedKana) {
       setFeedback('correct');
+      triggerHaptic('success');
+      audio.play('correct');
       // Auto advance after delay
       setTimeout(() => {
         addXp(20); // Bonus for Typing
@@ -228,6 +242,8 @@ export const Study: React.FC = () => {
       }, 1000);
     } else {
       setFeedback('incorrect');
+      triggerHaptic('error');
+      audio.play('wrong');
       setShowAnswer(true);
       // User must manually click next/continue
     }

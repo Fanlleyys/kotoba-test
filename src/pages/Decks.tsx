@@ -189,7 +189,7 @@ export const Decks: React.FC = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setSelectedTag('')}
-                className={`px-4 py-2 rounded-full whitespace-nowrap transition-all text-xs md:text-sm font-medium border ${!selectedTag ? 'bg-white text-black border-white' : 'bg-[#151520] border-white/10 text-gray-400 hover:text-white hover:border-white/30'}`}
+                className={`flex-shrink-0 px-4 py-2 rounded-full whitespace-nowrap transition-all text-xs md:text-sm font-medium border ${!selectedTag ? 'bg-white text-black border-white' : 'bg-[#151520] border-white/10 text-gray-400 hover:text-white hover:border-white/30'}`}
               >
                 All
               </button>
@@ -197,7 +197,7 @@ export const Decks: React.FC = () => {
                 <button
                   key={tag}
                   onClick={() => setSelectedTag(tag)}
-                  className={`px-4 py-2 rounded-full whitespace-nowrap transition-all text-xs md:text-sm font-medium border ${selectedTag === tag ? 'bg-primary/20 border-primary text-primary' : 'bg-[#151520] border-white/10 text-gray-400 hover:text-white hover:border-white/30'}`}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full whitespace-nowrap transition-all text-xs md:text-sm font-medium border ${selectedTag === tag ? 'bg-primary/20 border-primary text-primary' : 'bg-[#151520] border-white/10 text-gray-400 hover:text-white hover:border-white/30'}`}
                 >
                   #{tag}
                 </button>
@@ -238,8 +238,8 @@ export const Decks: React.FC = () => {
                   <div className="flex items-center gap-1.5"><Clock size={14} className={dueCount > 0 ? "text-pink-400" : "text-green-400"} /><span className={dueCount > 0 ? "text-pink-100" : ""}>{dueCount} Due</span></div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => navigate(`/study?deckId=${deck.id}`)} className="flex-1 bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 active:scale-95 text-sm"><Play size={16} fill="currentColor" /> Study</button>
-                  <div className="flex bg-white/5 rounded-xl p-1 border border-white/5">
+                  <button onClick={() => navigate(`/study?deckId=${deck.id}`)} className="flex-1 min-w-[90px] bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 active:scale-95 text-sm whitespace-nowrap"><Play size={16} fill="currentColor" /> Study</button>
+                  <div className="flex bg-white/5 rounded-xl p-1 border border-white/5 shrink-0">
                     <button onClick={() => navigate(`/test?deckId=${deck.id}`)} className="p-2 text-gray-400 hover:text-yellow-300 hover:bg-white/10 rounded-lg transition-colors" title="Quiz Mode"><Zap size={18} /></button>
                     <button onClick={() => navigate(`/arcade?deckId=${deck.id}`)} className="p-2 text-gray-400 hover:text-cyan-300 hover:bg-white/10 rounded-lg transition-colors" title="Arcade Game"><Gamepad2 size={18} /></button>
                     <button onClick={() => navigate(`/decks/${deck.id}`)} className="p-2 text-gray-400 hover:text-emerald-300 hover:bg-white/10 rounded-lg transition-colors" title="View Cards"><Layers size={18} /></button>

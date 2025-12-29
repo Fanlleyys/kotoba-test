@@ -48,17 +48,17 @@ const getCapacitorBrowser = async () => {
     }
 };
 
-// Build Firebase OAuth URL for external browser
-const buildFirebaseOAuthUrl = (): string => {
-    const authDomain = 'kotoba-f335d.firebaseapp.com';
-    const clientId = '159368872578-xxxxxxxxx.apps.googleusercontent.com'; // Will be auto-detected
-    const redirectUri = `${DEEP_LINK_CONFIG.scheme}://${DEEP_LINK_CONFIG.host}/${DEEP_LINK_CONFIG.callbackPath}`;
-
-    // Firebase auth handler URL
-    const baseUrl = `https://${authDomain}/__/auth/handler`;
-
-    return baseUrl;
-};
+// Build Firebase OAuth URL for external browser (unused for now, kept for future deep link implementation)
+// const buildFirebaseOAuthUrl = (): string => {
+//     const authDomain = 'kotoba-f335d.firebaseapp.com';
+//     const clientId = '159368872578-xxxxxxxxx.apps.googleusercontent.com'; // Will be auto-detected
+//     const redirectUri = `${DEEP_LINK_CONFIG.scheme}://${DEEP_LINK_CONFIG.host}/${DEEP_LINK_CONFIG.callbackPath}`;
+//
+//     // Firebase auth handler URL
+//     const baseUrl = `https://${authDomain}/__/auth/handler`;
+//
+//     return baseUrl;
+// };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);

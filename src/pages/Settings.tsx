@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTheme, THEMES } from '../context/ThemeContext';
 import { useStudySettings } from '../context/StudyContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Palette, BookOpen, Info, Github, Heart, Zap, Upload, Database, ChevronRight, Cloud, LogOut, RefreshCw, Loader2, CheckCircle, Camera, X, ExternalLink } from 'lucide-react';
 import { syncData, saveToCloud } from '../services/cloudSync';
 import { fileToBase64, resizeImage, saveProfilePhoto, getProfilePhoto, removeProfilePhoto } from '../services/profilePhoto';
@@ -11,6 +12,7 @@ export const Settings: React.FC = () => {
     const { theme, setTheme } = useTheme();
     const { showFurigana, setShowFurigana, reverseCards, setReverseCards } = useStudySettings();
     const { user, loading: authLoading, signInWithGoogle, signOut, isMobileApp, authError } = useAuth();
+    const { showToast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Cloud sync state
@@ -42,9 +44,10 @@ export const Settings: React.FC = () => {
             const resized = await resizeImage(base64, 200);
             await saveProfilePhoto(user.uid, resized);
             setCustomPhoto(resized);
+            showToast('Foto profil berhasil diupdate!', 'success');
         } catch (error) {
             console.error('Photo upload error:', error);
-            alert('Gagal upload foto. Pastikan ukuran < 500KB.');
+            showToast('Gagal upload foto. Pastikan ukuran < 500KB.', 'error');
         } finally {
             setIsUploadingPhoto(false);
         }
@@ -371,7 +374,7 @@ export const Settings: React.FC = () => {
 
                     {/* GitHub Link */}
                     <a
-                        href="https://github.com/Fannzxyl"
+                        href="https://github.com/Fanlleyys"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
@@ -380,7 +383,7 @@ export const Settings: React.FC = () => {
                             <Github size={20} className="text-gray-400 group-hover:text-white transition-colors" />
                             <div>
                                 <span className="text-white font-medium">GitHub</span>
-                                <span className="text-xs text-gray-400 block">@Fannzxyl</span>
+                                <span className="text-xs text-gray-400 block">@Fanlleyys</span>
                             </div>
                         </div>
                         <span className="text-gray-500 group-hover:text-gray-300 text-sm">→</span>
@@ -389,7 +392,7 @@ export const Settings: React.FC = () => {
                     {/* Credits */}
                     <div className="text-center pt-4 border-t border-white/10">
                         <p className="text-gray-400 text-sm flex items-center justify-center gap-1">
-                            Made with <Heart size={14} className="text-red-500 fill-red-500" /> by <span className="text-white font-medium">Fannzxyl</span>
+                            Made with <Heart size={14} className="text-red-500 fill-red-500" /> by <span className="text-white font-medium">Fanlleyys</span>
                         </p>
                         <p className="text-gray-500 text-xs mt-1">© 2024 KataSensei. All rights reserved.</p>
                     </div>

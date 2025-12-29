@@ -22,9 +22,11 @@ import {
   ArrowDown
 } from 'lucide-react';
 import { recognizeText } from '../../services/ocr';
+import { useToast } from '../../context/ToastContext';
 
 export const Import: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [decks, setDecks] = useState<Deck[]>([]);
 
   // State Import JSON
@@ -51,13 +53,32 @@ export const Import: React.FC = () => {
 
   // --- HANDLER: FULL BACKUP & RESTORE ---
 
-  const handleDownloadBackup = () => {
+  const handleDownloadBackup = async () => {
     const json = exportAllDataToJSON();
+    const filename = `katasensei-full-backup-${new Date().toISOString().slice(0, 10)}.json`;
     const blob = new Blob([json], { type: 'application/json' });
+
+    // Try Web Share API first (works better on mobile)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: 'application/json' })] })) {
+      try {
+        const file = new File([blob], filename, { type: 'application/json' });
+        await navigator.share({
+          files: [file],
+          title: 'KataSensei Backup',
+          text: 'Full backup of your KataSensei data',
+        });
+        return;
+      } catch (err) {
+        // User cancelled or share failed, fall through to download
+        console.log('Share cancelled or failed, trying download...');
+      }
+    }
+
+    // Fallback: Standard download (works on desktop, may not work on mobile WebViews)
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `katasensei-full-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -83,13 +104,17 @@ export const Import: React.FC = () => {
       const ok = importAllDataFromJSON(content);
 
       if (ok) {
-        alert("Backup berhasil di-restore! Halaman akan dimuat ulang.");
-        window.location.reload();
+        showToast("Backup berhasil di-restore! Memuat ulang...", 'success');
+        setTimeout(() => window.location.reload(), 2000);
       } else {
         setRestoreError("Format file backup tidak valid atau rusak.");
+        showToast("Gagal restore backup.", 'error');
       }
     };
-    reader.onerror = () => setRestoreError("Gagal membaca file.");
+    reader.onerror = () => {
+      setRestoreError("Gagal membaca file.");
+      showToast("Gagal membaca file backup.", 'error');
+    };
     reader.readAsText(file);
     e.target.value = '';
   };
@@ -113,8 +138,9 @@ export const Import: React.FC = () => {
     try {
       const result = await recognizeText(selectedImage, (p) => setOcrProgress(p));
       setOcrResult(result.text);
+      showToast("OCR Berhasil!", 'success');
     } catch (err) {
-      alert("OCR Failed: " + (err as Error).message);
+      showToast("OCR Gagal: " + (err as Error).message, 'error');
     } finally {
       setIsProcessing(false);
     }

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type Theme = 'violet' | 'sakura' | 'cyberpunk' | 'samurai' | 'matcha' | 'golden' | 'moonlight' | 'sunset' | 'obsidian';
+export type Theme = 'violet' | 'dracula' | 'tokyo-night' | 'nord' | 'cyberpunk' | 'synthwave' | 'monokai' | 'catppuccin';
 
 interface ThemeContextType {
     theme: Theme;
@@ -9,16 +9,15 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const THEMES: { id: Theme; name: string; primary: string; secondary: string }[] = [
-    { id: 'violet', name: 'Default', primary: '#7c3aed', secondary: '#c084fc' },
-    { id: 'sakura', name: 'Sakura', primary: '#ec4899', secondary: '#f472b6' },
-    { id: 'cyberpunk', name: 'Cyberpunk', primary: '#06b6d4', secondary: '#67e8f9' },
-    { id: 'samurai', name: 'Samurai', primary: '#ef4444', secondary: '#f87171' },
-    { id: 'matcha', name: 'Matcha', primary: '#10b981', secondary: '#34d399' },
-    { id: 'golden', name: 'Golden', primary: '#f59e0b', secondary: '#fbbf24' },
-    { id: 'moonlight', name: 'Moonlight', primary: '#6366f1', secondary: '#a78bfa' },
-    { id: 'sunset', name: 'Sunset', primary: '#f43f5e', secondary: '#fb923c' },
-    { id: 'obsidian', name: 'Obsidian', primary: '#ffffff', secondary: '#94a3b8' },
+export const THEMES: { id: Theme; name: string; primary: string; secondary: string; bg: string }[] = [
+    { id: 'violet', name: 'Default', primary: '#7c3aed', secondary: '#c084fc', bg: '#050508' },
+    { id: 'dracula', name: 'Dracula', primary: '#bd93f9', secondary: '#ff79c6', bg: '#282a36' },
+    { id: 'tokyo-night', name: 'Tokyo Night', primary: '#7aa2f7', secondary: '#bb9af7', bg: '#1a1b26' },
+    { id: 'nord', name: 'Nord', primary: '#88c0d0', secondary: '#81a1c1', bg: '#2e3440' },
+    { id: 'cyberpunk', name: 'Cyberpunk', primary: '#f7e018', secondary: '#00f0ff', bg: '#050505' },
+    { id: 'synthwave', name: 'Synthwave', primary: '#ff71ce', secondary: '#01cdfe', bg: '#2b213a' },
+    { id: 'monokai', name: 'Monokai', primary: '#a6e22e', secondary: '#f92672', bg: '#272822' },
+    { id: 'catppuccin', name: 'Catppuccin', primary: '#f5c2e7', secondary: '#cba6f7', bg: '#1e1e2e' },
 ];
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -39,6 +38,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         if (theme !== 'violet') {
             body.classList.add(`theme-${theme}`);
+        }
+
+        // Update meta theme-color
+        const activeTheme = THEMES.find(t => t.id === theme);
+        if (activeTheme) {
+            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', activeTheme.bg);
         }
 
         // Save to local storage

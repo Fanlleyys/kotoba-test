@@ -35,76 +35,76 @@ ruby rt {
   /* #050508 */
 }
 
-.theme-sakura {
-  --color-primary: 236 72 153;
-  /* #ec4899 */
-  --color-secondary: 244 114 182;
-  /* #f472b6 */
-  --color-bg: 20 5 10;
-  /* Dark Pink Tint */
-}
-
-.theme-cyberpunk {
-  --color-primary: 6 182 212;
-  /* #06b6d4 */
-  --color-secondary: 103 232 249;
-  /* #67e8f9 */
-  --color-bg: 2 10 15;
-  /* Dark Cyan Tint */
-}
-
-.theme-samurai {
-  --color-primary: 239 68 68;
-  /* #ef4444 */
-  --color-secondary: 248 113 113;
-  /* #f87171 */
-  --color-bg: 15 3 3;
-  /* Dark Red Tint */
-}
-
-.theme-matcha {
-  --color-primary: 16 185 129;
-  /* #10b981 */
-  --color-secondary: 52 211 153;
-  /* #34d399 */
-  --color-bg: 2 15 5;
-  /* Dark Green Tint */
-}
-
-.theme-golden {
-  --color-primary: 245 158 11;
-  /* #f59e0b */
-  --color-secondary: 251 191 36;
-  /* #fbbf24 */
-  /* Dark Amber Tint */
-}
-
 /* --- PREMIUM THEMES --- */
-.theme-moonlight {
-  --color-primary: 99 102 241;
-  /* Indigo-500 */
-  --color-secondary: 167 139 250;
-  /* Violet-400 */
-  --color-bg: 15 23 42;
-  /* Slate-900 */
+
+/* Dracula */
+.theme-dracula {
+  --color-primary: 189 147 249;
+  /* #bd93f9 */
+  --color-secondary: 255 121 198;
+  /* #ff79c6 */
+  --color-bg: 40 42 54;
+  /* #282a36 */
 }
 
-.theme-sunset {
-  --color-primary: 244 63 94;
-  /* Rose-500 */
-  --color-secondary: 251 146 60;
-  /* Orange-400 */
-  --color-bg: 28 10 10;
-  /* Dark Rose Tint */
+/* Tokyo Night */
+.theme-tokyo-night {
+  --color-primary: 122 162 247;
+  /* #7aa2f7 */
+  --color-secondary: 187 154 247;
+  /* #bb9af7 */
+  --color-bg: 26 27 38;
+  /* #1a1b26 */
 }
 
-.theme-obsidian {
-  --color-primary: 255 255 255;
-  /* White */
-  --color-secondary: 148 163 184;
-  /* Slate-400 */
-  --color-bg: 0 0 0;
-  /* Pure Black */
+/* Nord */
+.theme-nord {
+  --color-primary: 136 192 208;
+  /* #88c0d0 */
+  --color-secondary: 129 161 193;
+  /* #81a1c1 */
+  --color-bg: 46 52 64;
+  /* #2e3440 */
+}
+
+/* Cyberpunk */
+.theme-cyberpunk {
+  --color-primary: 247 224 24;
+  /* #f7e018 */
+  --color-secondary: 0 240 255;
+  /* #00f0ff */
+  --color-bg: 5 5 5;
+  /* #050505 */
+}
+
+/* Synthwave */
+.theme-synthwave {
+  --color-primary: 255 113 206;
+  /* #ff71ce */
+  --color-secondary: 1 205 254;
+  /* #01cdfe */
+  --color-bg: 43 33 58;
+  /* #2b213a */
+}
+
+/* Monokai */
+.theme-monokai {
+  --color-primary: 166 226 46;
+  /* #a6e22e */
+  --color-secondary: 249 38 114;
+  /* #f92672 */
+  --color-bg: 39 40 34;
+  /* #272822 */
+}
+
+/* Catppuccin */
+.theme-catppuccin {
+  --color-primary: 245 194 231;
+  /* #f5c2e7 */
+  --color-secondary: 203 166 247;
+  /* #cba6f7 */
+  --color-bg: 30 30 46;
+  /* #1e1e2e */
 }
 
 
@@ -289,9 +289,7 @@ a {
 
 /* Smoother transitions on mobile */
 @media (max-width: 768px) {
-  * {
-    -webkit-transform: translate3d(0, 0, 0);
-  }
+  /* Global transform removed to fix position: fixed context */
 
   /* Reduce animation duration for snappier feel */
   .transition-all {

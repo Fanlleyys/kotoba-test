@@ -119,9 +119,9 @@ const getOrCreateTodaySession = (stats: UserStats): StudySession => {
 const updateTodaySession = (stats: UserStats, session: StudySession): StudySession[] => {
     const history = stats.studyHistory.filter(s => s.date !== session.date);
     history.push(session);
-    // Keep only last 30 days
+    // Keep last 365 days (1 year history) for heatmap
     history.sort((a, b) => b.date.localeCompare(a.date));
-    return history.slice(0, 30);
+    return history.slice(0, 365);
 };
 
 /**

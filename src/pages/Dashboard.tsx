@@ -10,6 +10,9 @@ import { AccuracyTrend } from '../components/ui/AccuracyTrend';
 import { getUserStats, getWeeklyStudyData, getAccuracyRate, formatStudyTime } from '../modules/gamification/streak';
 import { UserStats, INITIAL_STATS, StudySession } from '../modules/gamification/model';
 import { useAuth } from '../context/AuthContext';
+import { triggerHaptic } from '../services/haptics';
+import { audio } from '../services/audio';
+import { ActivityHeatmap } from '../components/ui/ActivityHeatmap';
 
 export const Dashboard: React.FC = () => {
   const [cards, setCards] = useState<Card[]>([]);
@@ -88,6 +91,7 @@ export const Dashboard: React.FC = () => {
               <div className="relative z-10 mt-6 md:mt-8">
                 <Link
                   to="/study"
+                  onClick={() => { triggerHaptic('medium'); audio.play('click'); }}
                   className="inline-flex items-center gap-2 md:gap-3 bg-primary hover:bg-violet-600 text-white text-sm md:text-lg font-bold py-3 px-5 md:py-4 md:px-8 rounded-2xl shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)] hover:scale-105 transition-all duration-300 group active:scale-95"
                 >
                   <Play fill="currentColor" size={20} className="group-hover:translate-x-1 transition-transform md:w-6 md:h-6" />
@@ -112,6 +116,7 @@ export const Dashboard: React.FC = () => {
               <div className="relative z-10 mt-6 md:mt-8 flex flex-wrap gap-3 md:gap-4">
                 <Link
                   to="/study?mode=cram"
+                  onClick={() => { triggerHaptic('medium'); audio.play('click'); }}
                   className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-2.5 px-5 md:py-3 md:px-6 rounded-xl transition-all text-sm md:text-base"
                 >
                   <Brain size={18} className="md:w-5 md:h-5" />
@@ -140,6 +145,7 @@ export const Dashboard: React.FC = () => {
               <div className="relative z-10 mt-6 md:mt-8">
                 <Link
                   to="/import"
+                  onClick={() => { triggerHaptic('medium'); audio.play('click'); }}
                   className="inline-flex items-center gap-3 bg-primary hover:bg-violet-600 text-white text-sm md:text-lg font-bold py-3 px-5 md:py-4 md:px-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300"
                 >
                   <Layers size={20} className="md:w-6 md:h-6" />
@@ -305,6 +311,20 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Activity Heatmap */}
+      <div className="glass-panel p-4 md:p-8 rounded-3xl">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="p-2 bg-green-500/20 rounded-lg text-green-300">
+            <Layers size={20} />
+          </div>
+          <div>
+            <h3 className="font-bold text-base md:text-xl text-white">Study Activity</h3>
+            <p className="text-xs text-gray-400">Konsistensi belajar kamu tahun ini</p>
+          </div>
+        </div>
+        <ActivityHeatmap data={stats.studyHistory} />
       </div>
 
       {/* Jadwal Review (existing) */}

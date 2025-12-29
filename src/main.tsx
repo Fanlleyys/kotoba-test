@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { StudyProvider } from './context/StudyContext';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 
 const rootElement = document.getElementById('root');
 
@@ -20,9 +21,11 @@ root.render(
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <StudyProvider>
-            <App />
-          </StudyProvider>
+          <ToastProvider>
+            <StudyProvider>
+              <App />
+            </StudyProvider>
+          </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
